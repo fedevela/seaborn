@@ -1251,6 +1251,20 @@ class PairGrid(Grid):
         super().__init__()
 
         # Sort out the variables that define the grid
+        # PSEUDOCODE [PAIR-MI-007]:
+        # INPUT: an ordinary DataFrame whose columns have supported single-level
+        # labels, plus optional `vars`, `x_vars`, and `y_vars` selections.
+        # IF `vars` is present, preserve its order for both grid axes.
+        # ELSE preserve explicit `x_vars` and `y_vars` independently; for either
+        # missing axis selection, use eligible numeric columns in DataFrame order
+        # after excluding the hue variable exactly as in the established flow.
+        # TRANSITION the selected x sequence into grid columns and the selected y
+        # sequence into grid rows without changing single-level selection semantics.
+        # FAILURE: retain the established empty-selection and invalid-label paths;
+        # do not reinterpret, replace, or silently discard a requested label.
+        # VERIFY test_pair_mi_007_default_single_level_selection_remains_functional,
+        # test_pair_mi_007_explicit_single_level_vars_preserve_grid_order, and
+        # test_pair_mi_007_explicit_single_level_x_y_vars_preserve_grid_arrangement.
         # PSEUDOCODE [PAIR-MI-001, PAIR-MI-002, PAIR-MI-006]:
         # INPUT: the caller-owned DataFrame and no explicit grid variables.
         # DISCOVER each eligible numeric column by its complete column identifier.
@@ -2230,6 +2244,18 @@ def pairplot(
             elif hue is not None:
                 plot_kws["style"] = data[hue]
                 plot_kws["markers"] = markers
+
+    # PSEUDOCODE [PAIR-MI-007]:
+    # RECEIVE the PairGrid containing the established ordered single-level x/y
+    # selections. IF a diagonal kind is enabled, dispatch the corresponding
+    # univariate plotter to every cell where the row and column labels match.
+    # THEN select off-diagonal mapping when a diagonal exists; otherwise select
+    # full-grid mapping, and dispatch the requested bivariate plotter across the
+    # resulting cells without changing their row/column arrangement or order.
+    # OUTPUT the grid with established diagonal and off-diagonal artists attached.
+    # FAILURE: propagate the existing invalid-kind, lookup, and plotting failures;
+    # do not add a fallback that changes ordinary single-level plotting semantics.
+    # VERIFY test_pair_mi_007_single_level_diagonal_and_offdiagonal_plots_are_constructed.
 
     # Draw the marginal plots on the diagonal
     diag_kws = diag_kws.copy()
