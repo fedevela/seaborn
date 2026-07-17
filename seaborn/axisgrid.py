@@ -1263,6 +1263,21 @@ class PairGrid(Grid):
         numeric_cols = self._find_numeric_cols(data)
         if hue in numeric_cols:
             numeric_cols.remove(hue)
+        # PSEUDOCODE [PAIR-MI-005]:
+        # VERIFY test_pair_mi_005_vars_complete_tuples_select_square_grid_in_order:
+        # IF `vars` is supplied, COPY its complete identifiers in caller order into
+        # both axis sequences; each list position becomes the corresponding grid
+        # column and row, so equal sequences establish the requested square grid.
+        # VERIFY test_pair_mi_005_x_y_complete_tuples_select_grid_columns_rows_in_order:
+        # ELSE preserve explicit `x_vars` and `y_vars` independently in caller order;
+        # map x position j to grid column j and y position i to grid row i.
+        # VERIFY test_pair_mi_005_shared_level_values_select_distinct_complete_tuples:
+        # TREAT every complete tuple as one identifier throughout normalization and
+        # traversal. RESOLVE only that tuple against `data`; never retry with an
+        # individual level value or merge it with another tuple sharing that value.
+        # FAILURE: IF an explicit complete identifier is absent or does not resolve
+        # to one Series, propagate the established pandas lookup/shape failure.
+        # OUTPUT: ordered atomic x/y identifier sequences for grid construction.
         if vars is not None:
             x_vars = list(vars)
             y_vars = list(vars)
@@ -1589,6 +1604,10 @@ class PairGrid(Grid):
 
     def _map_bivariate(self, func, indices, **kwargs):
         """Draw a bivariate plot on the indicated axes."""
+        # PSEUDOCODE [PAIR-MI-005]:
+        # FOR each requested cell (i, j), READ y identifier i and x identifier j
+        # from their preserved sequences, then hand those complete identifiers to
+        # the cell plotter; skipped corner cells do not reorder either sequence.
         # This is a hack to handle the fact that new distribution plots don't add
         # their artists onto the axes. This is probably superior in general, but
         # we'll need a better way to handle it in the axisgrid functions.
@@ -1611,7 +1630,7 @@ class PairGrid(Grid):
 
     def _plot_bivariate(self, x_var, y_var, ax, func, **kwargs):
         """Draw a bivariate plot on the specified axes."""
-        # PSEUDOCODE [PAIR-MI-003, PAIR-MI-004]:
+        # PSEUDOCODE [PAIR-MI-003, PAIR-MI-004, PAIR-MI-005]:
         # RECEIVE one established off-diagonal cell and its complete x/y identifiers.
         # SELECT each vector independently by its complete identifier and verify that
         # each resolution is one-dimensional; never substitute a shared level value.
@@ -1637,7 +1656,7 @@ class PairGrid(Grid):
         if self._hue_var is not None and self._hue_var not in axes_vars:
             axes_vars.append(self._hue_var)
 
-        # DEPENDENCY BOUNDARY [PAIR-MI-003, PAIR-MI-004]: PairGrid passes pandas
+        # DEPENDENCY BOUNDARY [PAIR-MI-003, PAIR-MI-004, PAIR-MI-005]: PairGrid passes pandas
         # complete identifiers selected from its grid state. Resolution at this
         # seam must yield one Series per axis variable; partial MultiIndex lookup
         # and column-label normalization belong outside the pairplot path.
