@@ -1184,17 +1184,6 @@ class PairGrid(Grid):
 
     """
 
-    # ARCHITECTURE [PAIR-MI-001, PAIR-MI-002, PAIR-MI-003, PAIR-MI-004,
-    # PAIR-MI-005, PAIR-MI-006, PAIR-MI-007]: PairGrid owns column-identifier
-    # identity from discovery through grid traversal. Figure-level pairplot
-    # delegates into this boundary; pandas remains responsible only for resolving
-    # a complete identifier to a Series.
-    # Internal variable collections must therefore preserve tuple identifiers as
-    # atomic values and must not write through to the caller-owned columns index.
-    # Ordinary single-level labels remain the compatibility contract for this
-    # boundary: default and explicit selections retain their established order and
-    # continue to define the grid's row, column, diagonal, and off-diagonal topology.
-
     def __init__(
         self, data, *, hue=None, vars=None, x_vars=None, y_vars=None,
         hue_order=None, palette=None, hue_kws=None, corner=False, diag_sharey=True,
@@ -1254,48 +1243,9 @@ class PairGrid(Grid):
         super().__init__()
 
         # Sort out the variables that define the grid
-        # PSEUDOCODE [PAIR-MI-007]:
-        # INPUT: an ordinary DataFrame whose columns have supported single-level
-        # labels, plus optional `vars`, `x_vars`, and `y_vars` selections.
-        # IF `vars` is present, preserve its order for both grid axes.
-        # ELSE preserve explicit `x_vars` and `y_vars` independently; for either
-        # missing axis selection, use eligible numeric columns in DataFrame order
-        # after excluding the hue variable exactly as in the established flow.
-        # TRANSITION the selected x sequence into grid columns and the selected y
-        # sequence into grid rows without changing single-level selection semantics.
-        # FAILURE: retain the established empty-selection and invalid-label paths;
-        # do not reinterpret, replace, or silently discard a requested label.
-        # VERIFY test_pair_mi_007_default_single_level_selection_remains_functional,
-        # test_pair_mi_007_explicit_single_level_vars_preserve_grid_order, and
-        # test_pair_mi_007_explicit_single_level_x_y_vars_preserve_grid_arrangement.
-        # PSEUDOCODE [PAIR-MI-001, PAIR-MI-002, PAIR-MI-006]:
-        # INPUT: the caller-owned DataFrame and no explicit grid variables.
-        # DISCOVER each eligible numeric column by its complete column identifier.
-        # RETAIN each identifier as one atomic variable, including tuple identifiers,
-        # and preserve the DataFrame column iteration order when assigning both axes.
-        # DO NOT flatten, rename, reorder, or write through the source columns index.
-        # HAND OFF the resulting variable sequences to grid construction; if either
-        # sequence is empty, follow the established no-variables failure path.
-        # OUTPUT: a grid whose variable state is independent of, and does not mutate,
-        # the caller's MultiIndex column identifiers or ordering.
         numeric_cols = self._find_numeric_cols(data)
         if hue in numeric_cols:
             numeric_cols.remove(hue)
-        # PSEUDOCODE [PAIR-MI-005]:
-        # VERIFY test_pair_mi_005_vars_complete_tuples_select_square_grid_in_order:
-        # IF `vars` is supplied, COPY its complete identifiers in caller order into
-        # both axis sequences; each list position becomes the corresponding grid
-        # column and row, so equal sequences establish the requested square grid.
-        # VERIFY test_pair_mi_005_x_y_complete_tuples_select_grid_columns_rows_in_order:
-        # ELSE preserve explicit `x_vars` and `y_vars` independently in caller order;
-        # map x position j to grid column j and y position i to grid row i.
-        # VERIFY test_pair_mi_005_shared_level_values_select_distinct_complete_tuples:
-        # TREAT every complete tuple as one identifier throughout normalization and
-        # traversal. RESOLVE only that tuple against `data`; never retry with an
-        # individual level value or merge it with another tuple sharing that value.
-        # FAILURE: IF an explicit complete identifier is absent or does not resolve
-        # to one Series, propagate the established pandas lookup/shape failure.
-        # OUTPUT: ordered atomic x/y identifier sequences for grid construction.
         if vars is not None:
             x_vars = self._normalize_vars(data, vars)
             y_vars = list(x_vars)
@@ -1308,10 +1258,6 @@ class PairGrid(Grid):
         else:
             y_vars = self._normalize_vars(data, y_vars)
 
-        # OWNERSHIP CONTRACT [PAIR-MI-005]: x_vars and y_vars are independent,
-        # ordered PairGrid-owned topology descriptors. Each entry is one complete
-        # DataFrame column identifier; its sequence position owns the corresponding
-        # grid column or row and crosses unchanged into the data-resolution seam.
         self.x_vars = x_vars = list(x_vars)
         self.y_vars = y_vars = list(y_vars)
         self.square_grid = self.x_vars == self.y_vars
@@ -1469,12 +1415,6 @@ class PairGrid(Grid):
             called ``color`` and  ``label``.
 
         """
-        # PSEUDOCODE [PAIR-MI-004]:
-        # IF the grid is square, enumerate every lower-triangle ordered pair and,
-        # unless corner mode suppresses it, every upper-triangle ordered pair.
-        # ELSE enumerate each row/column pair whose complete identifiers differ.
-        # HAND OFF every enumerated pair exactly once to bivariate mapping, leaving
-        # diagonal cells exclusively to diagonal mapping.
         if self.square_grid:
             self.map_lower(func, **kwargs)
             if not self._corner:
@@ -1501,15 +1441,6 @@ class PairGrid(Grid):
         """
         # Add special diagonal axes for the univariate plot
         if self.diag_axes is None:
-            # PSEUDOCODE [PAIR-MI-003, PAIR-MI-004]:
-            # FOR each row variable and column variable, compare complete identifiers.
-            # WHEN they match, append the complete identifier as one atomic entry and
-            # create exactly one diagonal plotting axis for that variable.
-            # MATERIALIZE diagonal variable state as a one-dimensional sequence whose
-            # entries remain atomic even when an identifier is tuple-valued.
-            # LATER, resolve each stored entry against the DataFrame by that complete
-            # identifier; REQUIRE a one-dimensional Series, never a partial-level or
-            # multiple-column selection, before handing it to the univariate plotter.
             diag_vars = []
             diag_axes = []
             for i, y_var in enumerate(self.y_vars):
@@ -1541,12 +1472,7 @@ class PairGrid(Grid):
                 for ax in diag_axes[1:]:
                     share_axis(diag_axes[0], ax, "y")
 
-            # REPRESENTATION CONTRACT [PAIR-MI-003, PAIR-MI-004]: diag_vars is
-            # the PairGrid-owned seam between grid topology and univariate data
-            # resolution. Its container representation must preserve each complete
-            # column identifier as one entry, including tuple-valued identifiers.
-            self.diag_vars = np.empty(len(diag_vars), np.object_)
-            self.diag_vars[:] = diag_vars
+            self.diag_vars = diag_vars
             self.diag_axes = np.array(diag_axes, np.object_)
 
         if "hue" not in signature(func).parameters:
@@ -1625,10 +1551,6 @@ class PairGrid(Grid):
 
     def _map_bivariate(self, func, indices, **kwargs):
         """Draw a bivariate plot on the indicated axes."""
-        # PSEUDOCODE [PAIR-MI-005]:
-        # FOR each requested cell (i, j), READ y identifier i and x identifier j
-        # from their preserved sequences, then hand those complete identifiers to
-        # the cell plotter; skipped corner cells do not reorder either sequence.
         # This is a hack to handle the fact that new distribution plots don't add
         # their artists onto the axes. This is probably superior in general, but
         # we'll need a better way to handle it in the axisgrid functions.
@@ -1651,14 +1573,6 @@ class PairGrid(Grid):
 
     def _plot_bivariate(self, x_var, y_var, ax, func, **kwargs):
         """Draw a bivariate plot on the specified axes."""
-        # PSEUDOCODE [PAIR-MI-003, PAIR-MI-004, PAIR-MI-005]:
-        # RECEIVE one established off-diagonal cell and its complete x/y identifiers.
-        # SELECT each vector independently by its complete identifier and verify that
-        # each resolution is one-dimensional; never substitute a shared level value.
-        # APPLY the established missing-data and hue flow without changing identifiers.
-        # HAND OFF the two corresponding Series to the bivariate plotter for this cell.
-        # IF a complete identifier cannot resolve, propagate the established lookup
-        # failure; do not retry with a partial tuple or conflate matching level labels.
         if "hue" not in signature(func).parameters:
             self._plot_bivariate_iter_hue(x_var, y_var, ax, func, **kwargs)
             return
@@ -1677,10 +1591,6 @@ class PairGrid(Grid):
         if self._hue_var is not None and self._hue_var not in axes_vars:
             axes_vars.append(self._hue_var)
 
-        # DEPENDENCY BOUNDARY [PAIR-MI-003, PAIR-MI-004, PAIR-MI-005]: PairGrid passes pandas
-        # complete identifiers selected from its grid state. Resolution at this
-        # seam must yield one Series per axis variable; partial MultiIndex lookup
-        # and column-label normalization belong outside the pairplot path.
         data = self.data[axes_vars]
         if self._dropna:
             data = data.dropna()
@@ -1753,10 +1663,6 @@ class PairGrid(Grid):
 
     def _find_numeric_cols(self, data):
         """Find which variables in a DataFrame are numeric."""
-        # OWNERSHIP CONTRACT [PAIR-MI-001, PAIR-MI-002, PAIR-MI-006]: this is
-        # PairGrid's default-variable discovery boundary. It supplies an ordered,
-        # grid-owned collection of atomic DataFrame column identifiers without
-        # adapting or mutating the caller-owned columns index.
         numeric_cols = []
         for col in data:
             if variable_type(data[col]) == "numeric":
@@ -2219,11 +2125,6 @@ def pairplot(
 
     # Set up the PairGrid
     grid_kws.setdefault("diag_sharey", diag_kind == "hist")
-    # INTEGRATION SEAM [PAIR-MI-001, PAIR-MI-004, PAIR-MI-005, PAIR-MI-006,
-    # PAIR-MI-007]: pairplot owns orchestration only. PairGrid owns variable
-    # identity, topology, and lookup; the original DataFrame and the caller's
-    # ordered selections cross this seam unchanged. The resulting grid is the
-    # sole source of row/column placement for diagonal and off-diagonal dispatch.
     grid = PairGrid(data, vars=vars, x_vars=x_vars, y_vars=y_vars, hue=hue,
                     hue_order=hue_order, palette=palette, corner=corner,
                     height=height, aspect=aspect, dropna=dropna, **grid_kws)
@@ -2249,18 +2150,6 @@ def pairplot(
             elif hue is not None:
                 plot_kws["style"] = data[hue]
                 plot_kws["markers"] = markers
-
-    # PSEUDOCODE [PAIR-MI-007]:
-    # RECEIVE the PairGrid containing the established ordered single-level x/y
-    # selections. IF a diagonal kind is enabled, dispatch the corresponding
-    # univariate plotter to every cell where the row and column labels match.
-    # THEN select off-diagonal mapping when a diagonal exists; otherwise select
-    # full-grid mapping, and dispatch the requested bivariate plotter across the
-    # resulting cells without changing their row/column arrangement or order.
-    # OUTPUT the grid with established diagonal and off-diagonal artists attached.
-    # FAILURE: propagate the existing invalid-kind, lookup, and plotting failures;
-    # do not add a fallback that changes ordinary single-level plotting semantics.
-    # VERIFY test_pair_mi_007_single_level_diagonal_and_offdiagonal_plots_are_constructed.
 
     # Draw the marginal plots on the diagonal
     diag_kws = diag_kws.copy()
