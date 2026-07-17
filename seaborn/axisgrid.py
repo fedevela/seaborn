@@ -2155,6 +2155,19 @@ def pairplot(
 
     # Add a legend
     if hue is not None:
+        # PSEUDOCODE — GUID: HUE-004, HUE-005
+        # INPUT: the caller's hue_order and the hue handles collected by PairGrid.
+        # IF hue_order specifies a partial sequence:
+        #     NORMALIZE each supplied level exactly as legend handle keys are normalized.
+        #     FOR each supplied level, in caller-provided order:
+        #         SELECT only that level's collected handle and append its label.
+        #         IF its handle is unavailable, preserve the requested label position
+        #         with the legend builder's neutral fallback; do not substitute or reorder.
+        #     IGNORE every collected or observed level absent from hue_order.
+        #     HAND OFF the selected handles and labels in the supplied sequence.
+        # OUTPUT (HUE-004): legend labels follow hue_order exactly.
+        # OUTPUT (HUE-005): no hue level omitted from hue_order reaches the legend.
+        # ELSE: retain PairGrid's resolved full-order legend behavior.
         grid.add_legend()
 
     grid.tight_layout()
