@@ -8,12 +8,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from pandas.testing import assert_series_equal
 
-from seaborn._core.scales import (
-    Nominal,
-    Continuous,
-    Temporal,
-    PseudoAxis,
-)
+from seaborn._core.data import PlotData
 from seaborn._core.properties import (
     IntervalProperty,
     ObjectProperty,
@@ -21,6 +16,12 @@ from seaborn._core.properties import (
     Alpha,
     Color,
     Fill,
+)
+from seaborn._core.scales import (
+    Nominal,
+    Continuous,
+    Temporal,
+    PseudoAxis,
 )
 from seaborn.palettes import color_palette
 from seaborn.external.version import Version
@@ -318,12 +319,29 @@ class TestBooleanColorContract:
     # BOOL-005
     def test_bool_005_python_numpy_pandas_bool_forms_map_equivalent_colors(self):
 
-        assert True
+        representations = [
+            [False, True, False, True],
+            np.array([False, True, False, True], dtype=np.bool_),
+            pd.Series([False, True, False, True], dtype="boolean"),
+        ]
+
+        mappings = []
+        for representation in representations:
+            data = PlotData(None, {"color": representation}).frame["color"]
+            prop = Color()
+            scale = prop.default_scale(data)._setup(data, prop)
+
+            assert isinstance(scale, Nominal)
+            mappings.append(scale(data))
+
+        for mapping in mappings[1:]:
+            assert_array_equal(mapping, mappings[0])
 
     # BOOL-005
     def test_bool_005_rejected_boolean_forms_stay_outside_color_mapping_support(self):
 
-        assert True
+        with pytest.raises(ValueError, match="all scalar values"):
+            PlotData(None, {"color": True})
 
     # BOOL-002, BOOL-010
     def test_bool_002_bool_010_default_mapping_keeps_true_false_colors_distinct(self):
