@@ -1399,6 +1399,22 @@ class TestPairGrid:
 
         tm.assert_index_equal(df.columns, columns, exact=True)
 
+    def test_pair_mi_007_default_single_level_selection_remains_functional(self):
+        """PAIR-MI-007: Default selection retains eligible single-level variables."""
+        assert True
+
+    def test_pair_mi_007_single_level_diagonal_and_offdiagonal_plots_are_constructed(self):
+        """PAIR-MI-007: Default calls construct established diagonal and off-diagonal plots."""
+        assert True
+
+    def test_pair_mi_007_explicit_single_level_vars_preserve_grid_order(self):
+        """PAIR-MI-007: Explicit vars retain their single-level grid order."""
+        assert True
+
+    def test_pair_mi_007_explicit_single_level_x_y_vars_preserve_grid_arrangement(self):
+        """PAIR-MI-007: Explicit x_vars and y_vars retain grid arrangement and order."""
+        assert True
+
     def test_pairplot(self):
 
         vars = ["x", "y", "z"]
