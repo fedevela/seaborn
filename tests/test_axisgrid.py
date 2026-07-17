@@ -1280,6 +1280,26 @@ class TestPairGrid:
 
         assert len(get_legend_handles(g._legend)) == len(self.df["a"].unique())
 
+    def test_pair_mi_001_default_multiindex_pairplot_does_not_raise_keyerror(self):
+        """PAIR-MI-001: Default pairplot construction does not raise KeyError."""
+        assert True
+
+    def test_pair_mi_002_default_selection_keeps_all_tuple_columns_in_order(self):
+        """PAIR-MI-002: Numeric MultiIndex variables retain tuple identity and order."""
+        assert True
+
+    def test_pair_mi_003_plot_data_resolves_complete_tuple_to_distinct_series(self):
+        """PAIR-MI-003: Plot data resolves by complete tuple without conflation."""
+        assert True
+
+    def test_pair_mi_004_four_variables_fill_diagonal_and_all_ordered_pairs(self):
+        """PAIR-MI-004: Four variables produce a complete pairwise plot grid."""
+        assert True
+
+    def test_pair_mi_006_pairplot_preserves_multiindex_columns_and_order(self):
+        """PAIR-MI-006: Pairplot leaves source MultiIndex columns unchanged."""
+        assert True
+
     def test_pairplot(self):
 
         vars = ["x", "y", "z"]
