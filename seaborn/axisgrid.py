@@ -2162,22 +2162,12 @@ def pairplot(
         # ARCHITECTURE — GUID: HUE-004, HUE-005
         # ``pairplot`` owns the partial-hue adapter between the caller contract
         # and ``Grid.add_legend(label_order=...)``. PairGrid remains responsible
-        # for typed hue resolution and handle collection; the adapter must emit
-        # only normalized requested labels, in caller order, at this seam.
-        # PSEUDOCODE — GUID: HUE-004, HUE-005
-        # INPUT: the caller's hue_order and the hue handles collected by PairGrid.
-        # IF hue_order specifies a partial sequence:
-        #     NORMALIZE each supplied level exactly as legend handle keys are normalized.
-        #     FOR each supplied level, in caller-provided order:
-        #         SELECT only that level's collected handle and append its label.
-        #         IF its handle is unavailable, preserve the requested label position
-        #         with the legend builder's neutral fallback; do not substitute or reorder.
-        #     IGNORE every collected or observed level absent from hue_order.
-        #     HAND OFF the selected handles and labels in the supplied sequence.
-        # OUTPUT (HUE-004): legend labels follow hue_order exactly.
-        # OUTPUT (HUE-005): no hue level omitted from hue_order reaches the legend.
-        # ELSE: retain PairGrid's resolved full-order legend behavior.
-        grid.add_legend()
+        # for typed hue resolution and handle collection.
+        if hue_order is None:
+            grid.add_legend()
+        else:
+            legend_order = list(map(utils.to_utf8, hue_order))
+            grid.add_legend(label_order=legend_order)
 
     grid.tight_layout()
 

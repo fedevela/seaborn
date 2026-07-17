@@ -1343,11 +1343,28 @@ class TestPairGrid:
 
     def test_HUE_004_pairplot_partial_hue_order_preserves_supplied_legend_sequence(self):
         """GUID: HUE-004 — included legend levels follow partial hue_order."""
-        assert True
+        order = ["c", "a"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        labels = [text.get_text() for text in g._legend.get_texts()]
+        assert labels == order
 
     def test_HUE_005_pairplot_partial_hue_order_excludes_omitted_levels_from_legend(self):
         """GUID: HUE-005 — omitted hue levels have no pairplot legend entry."""
-        assert True
+        order = ["a", "c"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        labels = [text.get_text() for text in g._legend.get_texts()]
+        omitted = set(self.df["a"].unique()).difference(order)
+        assert labels == order
+        assert omitted
+        assert omitted.isdisjoint(labels)
 
     def test_pairplot_reg(self):
 
