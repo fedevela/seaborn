@@ -56,6 +56,21 @@ class PolyFit(Stat):
         # empty fitted result as a normal group outcome without attempting a fit.
         # IF no complete pair remains, TAKE the same empty-result transition.
         # OTHERWISE, FIT and RETURN points derived only from this group's retained pairs.
+        # POLYFIT-006, POLYFIT-008 (prediction and single-group compatibility):
+        # INPUT: the configured polynomial order and grid size together with one
+        # fitting frame; retain both configuration values unchanged across filtering.
+        # REMOVE incomplete coordinate pairs, preserving the complete-data frame
+        # unchanged when every pair is complete.
+        # IF the retained coordinates cannot support the requested order, RETURN
+        # the established empty x/y result and do not construct a prediction grid.
+        # OTHERWISE, FIT the retained pairs at exactly the requested order; allow
+        # fitting failures to propagate through the established error path.
+        # CONSTRUCT exactly the requested number of grid coordinates from the
+        # minimum through maximum retained x coordinate, including both endpoints.
+        # EVALUATE the fitted polynomial on that grid and RETURN the established
+        # two-column x/y structure with coordinate names and ordering unchanged.
+        # FOR complete input, this sequence must preserve the established fitted
+        # values because filtering neither reorders nor modifies any fitting pair.
         data = data.dropna(subset=["x", "y"])
         x = np.asarray(data["x"].tolist())
         y = np.asarray(data["y"].tolist())
@@ -88,6 +103,16 @@ class PolyFit(Stat):
         # CONTINUE processing all remaining groups and do not treat it as failure.
         # COMBINE only the points each group returned; an empty group contributes
         # no fitted points and cannot supply observations to any other group.
+        # POLYFIT-008 (grouped output compatibility):
+        # FOR EACH established group, invoke the same single-group procedure with
+        # that group's complete input and preserve its grouping-key identity.
+        # IF a group fit succeeds, associate every returned x/y point with the
+        # unchanged originating key; never merge values or identities across groups.
+        # IF the single-group procedure returns empty, preserve the established
+        # omission behavior; IF it raises, propagate the established failure path.
+        # COMBINE successful group results using the established coordinate names,
+        # column order, row structure, and grouping columns, without transforming
+        # the per-group fitted values or replacing the group identities.
         return groupby.apply(data, self._fit_predict)
 
 
