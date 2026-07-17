@@ -198,43 +198,108 @@ class TestPolyFit:
         assert_array_equal(result["x"], [0, 1, 2])
 
     def test_polyfit_006_after_incomplete_pairs_removed_requested_order_is_retained(
-        self,
+        self, monkeypatch,
     ):
         """GUID: POLYFIT-006."""
-        assert True
+        data = pd.DataFrame({
+            "x": [-10, -2, -1, 0, 1, 2, 10],
+            "y": [np.nan, 4, 1, 0, 1, 4, np.nan],
+        })
+        fit = Mock(wraps=np.polyfit)
+        monkeypatch.setattr(np, "polyfit", fit)
+
+        PolyFit(order=2, gridsize=5)._fit_predict(data)
+
+        assert fit.call_args.args[2] == 2
 
     def test_polyfit_006_filtered_pairs_keep_requested_grid_size(
         self,
     ):
         """GUID: POLYFIT-006."""
-        assert True
+        data = pd.DataFrame({
+            "x": [-10, 0, 1, 2, 10],
+            "y": [np.nan, 1, 3, 5, np.nan],
+        })
+
+        result = PolyFit(order=1, gridsize=7)._fit_predict(data)
+
+        assert len(result) == 7
 
     def test_polyfit_006_grid_spans_retained_valid_coordinate_domain(
         self,
     ):
         """GUID: POLYFIT-006."""
-        assert True
+        data = pd.DataFrame({
+            "x": [-100, -2, 0, 3, 100],
+            "y": [np.nan, 1, 2, 4, np.nan],
+        })
+
+        result = PolyFit(order=1, gridsize=6)._fit_predict(data)
+
+        assert_array_equal(result["x"], np.linspace(-2, 3, 6))
 
     def test_polyfit_008_complete_ungrouped_input_preserves_established_fitted_values(
         self,
     ):
         """GUID: POLYFIT-008."""
-        assert True
+        data = pd.DataFrame({
+            "x": [-2, -1, 0, 1, 2],
+            "y": [4, 1, 0, 1, 4],
+        })
+
+        result = PolyFit(order=2, gridsize=5)._fit_predict(data)
+
+        assert_array_equal(result["x"], [-2, -1, 0, 1, 2])
+        assert_array_almost_equal(result["y"], [4, 1, 0, 1, 4])
 
     def test_polyfit_008_complete_ungrouped_keeps_names_and_output_structure(
         self,
     ):
         """GUID: POLYFIT-008."""
-        assert True
+        data = pd.DataFrame({"x": [0, 1, 2], "y": [1, 3, 5]})
+
+        result = PolyFit(order=1, gridsize=4)._fit_predict(data)
+
+        expected = pd.DataFrame({
+            "x": np.linspace(0, 2, 4),
+            "y": np.linspace(1, 5, 4),
+        })
+        pd.testing.assert_frame_equal(result, expected)
 
     def test_polyfit_008_complete_grouped_keeps_established_values_per_group(
         self,
     ):
         """GUID: POLYFIT-008."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, 1, 2, 10, 11, 12],
+            "y": [1, 3, 5, 20, 23, 26],
+            "group": ["a", "a", "a", "b", "b", "b"],
+        })
+
+        result = PolyFit(order=1, gridsize=3)(
+            data, GroupBy(["group"]), "x", {}
+        )
+
+        assert_array_equal(result["x"], [0, 1, 2, 10, 11, 12])
+        assert_array_almost_equal(result["y"], [1, 3, 5, 20, 23, 26])
 
     def test_polyfit_008_complete_grouped_keeps_names_structure_and_identity(
         self,
     ):
         """GUID: POLYFIT-008."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, 2, 10, 12],
+            "y": [1, 5, 20, 26],
+            "group": ["left", "left", "right", "right"],
+        })
+
+        result = PolyFit(order=1, gridsize=3)(
+            data, GroupBy(["group"]), "x", {}
+        )
+
+        expected = pd.DataFrame({
+            "x": [0., 1., 2., 10., 11., 12.],
+            "y": [1., 3., 5., 20., 23., 26.],
+            "group": ["left"] * 3 + ["right"] * 3,
+        })
+        pd.testing.assert_frame_equal(result, expected)
