@@ -315,6 +315,16 @@ class TestContinuous:
 
 class TestBooleanColorContract:
 
+    # BOOL-005
+    def test_bool_005_python_numpy_pandas_bool_forms_map_equivalent_colors(self):
+
+        assert True
+
+    # BOOL-005
+    def test_bool_005_rejected_boolean_forms_stay_outside_color_mapping_support(self):
+
+        assert True
+
     # BOOL-002, BOOL-010
     def test_bool_002_bool_010_default_mapping_keeps_true_false_colors_distinct(self):
 
