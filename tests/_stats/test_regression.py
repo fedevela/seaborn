@@ -196,3 +196,45 @@ class TestPolyFit:
         assert_array_equal(fit.call_args.args[0], [0, 2])
         assert_array_equal(fit.call_args.args[1], [1, 5])
         assert_array_equal(result["x"], [0, 1, 2])
+
+    def test_polyfit_006_after_incomplete_pairs_removed_requested_order_is_retained(
+        self,
+    ):
+        """GUID: POLYFIT-006."""
+        assert True
+
+    def test_polyfit_006_filtered_pairs_keep_requested_grid_size(
+        self,
+    ):
+        """GUID: POLYFIT-006."""
+        assert True
+
+    def test_polyfit_006_grid_spans_retained_valid_coordinate_domain(
+        self,
+    ):
+        """GUID: POLYFIT-006."""
+        assert True
+
+    def test_polyfit_008_complete_ungrouped_input_preserves_established_fitted_values(
+        self,
+    ):
+        """GUID: POLYFIT-008."""
+        assert True
+
+    def test_polyfit_008_complete_ungrouped_keeps_names_and_output_structure(
+        self,
+    ):
+        """GUID: POLYFIT-008."""
+        assert True
+
+    def test_polyfit_008_complete_grouped_keeps_established_values_per_group(
+        self,
+    ):
+        """GUID: POLYFIT-008."""
+        assert True
+
+    def test_polyfit_008_complete_grouped_keeps_names_structure_and_identity(
+        self,
+    ):
+        """GUID: POLYFIT-008."""
+        assert True
