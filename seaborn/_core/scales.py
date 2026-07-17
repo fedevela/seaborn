@@ -319,6 +319,18 @@ class ContinuousBase(Scale):
     values: tuple | str | None = None
     norm: tuple | None = None
 
+    # ARCHITECTURE CONTRACT [BOOL-007]
+    # Ownership: ContinuousBase._setup remains the single owner of continuous-domain
+    # normalization, transform resolution, configured ranges, and pipeline assembly.
+    # Boundary: Color.default_scale may route boolean color data to Nominal, but it
+    # must pass supported non-boolean continuous data through this existing contract;
+    # no boolean-specific adapter or branch belongs in ContinuousBase.
+    # Dependency direction: axis unit conversion -> resolved transform -> optional
+    # normalization -> Property.get_mapping. Scale configuration flows toward the
+    # property mapping seam; the property must not reimplement the preceding stages.
+    # Integration: TestContinuousColorPreservationContract is the regression locus
+    # for normalization, transform, range, and resulting-color preservation.
+
     # PSEUDOCODE CONTRACT [BOOL-007]
     # Verification: test_bool_007_non_boolean_continuous_color_normalization_stays_unchanged
     # Verification: test_bool_007_non_boolean_continuous_color_transform_remains_unchanged
