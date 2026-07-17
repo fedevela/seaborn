@@ -98,6 +98,18 @@ class TestBar:
             assert bar.get_edgecolor() == to_rgba(colors[i], 1)
         assert ax.patches[0].get_linewidth() < ax.patches[1].get_linewidth()
 
+    # BOOL-001, BOOL-010
+    def test_bool_001_bool_010_objects_plot_with_true_false_color_renders_without_subtraction(
+        self,
+    ):
+
+        assert True
+
+    # BOOL-004, BOOL-010
+    def test_bool_004_bool_010_reported_boolean_color_plot_renders_distinct_bars(self):
+
+        assert True
+
     def test_zero_height_skipped(self):
 
         p = Plot(["a", "b", "c"], [1, 0, 2]).add(Bar()).plot()

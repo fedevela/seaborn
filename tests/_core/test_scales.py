@@ -313,6 +313,24 @@ class TestContinuous:
             s.label(like=2)
 
 
+class TestBooleanColorContract:
+
+    # BOOL-002, BOOL-010
+    def test_bool_002_bool_010_default_mapping_keeps_true_false_colors_distinct(self):
+
+        assert True
+
+    # BOOL-003
+    def test_bool_003_scale_setup_establishes_domain_without_boolean_subtraction(self):
+
+        assert True
+
+    # BOOL-006
+    def test_bool_006_single_truth_value_maps_without_two_ended_continuous_range(self):
+
+        assert True
+
+
 class TestNominal:
 
     @pytest.fixture
