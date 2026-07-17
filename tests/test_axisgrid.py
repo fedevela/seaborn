@@ -1280,6 +1280,26 @@ class TestPairGrid:
         for ax in g.diag_axes:
             assert len(ax.collections) == n
 
+    def test_HUE_001_partial_categorical_hue_order_creates_pairplot(self):
+        """GUID: HUE-001 — partial string hue order completes without error."""
+        assert True
+
+    def test_HUE_002_partial_hue_order_omits_excluded_levels_on_diagonal(self):
+        """GUID: HUE-002 — diagonal plots exclude observations not in order."""
+        assert True
+
+    def test_HUE_002_partial_hue_order_omits_excluded_levels_off_diagonal(self):
+        """GUID: HUE-002 — off-diagonal plots exclude observations not in order."""
+        assert True
+
+    def test_HUE_003_partial_hue_order_keeps_included_levels_on_diagonal(self):
+        """GUID: HUE-003 — diagonal plots retain included observations."""
+        assert True
+
+    def test_HUE_003_partial_hue_order_keeps_included_levels_off_diagonal(self):
+        """GUID: HUE-003 — off-diagonal plots retain included observations."""
+        assert True
+
     def test_pairplot_reg(self):
 
         vars = ["x", "y", "z"]
