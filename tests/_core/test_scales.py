@@ -362,25 +362,60 @@ class TestNominalColorPreservationContract:
     def test_bool_008_non_boolean_categorical_levels_remain_distinct_after_boolean_support(
         self,
     ):
-        assert True
+
+        x = pd.Series(["a", "c", "b", "c"], name="color")
+        scale = Nominal()._setup(x, Color())
+
+        convert_units = scale._pipeline[0]
+        assert_array_equal(convert_units(x), [0, 1, 2, 1])
 
     # BOOL-008
     def test_bool_008_non_boolean_categorical_ordering_remains_unchanged_after_boolean_support(
         self,
     ):
-        assert True
+
+        order = ["b", "a", "d", "c"]
+        x = pd.Series(
+            ["a", "c", "b", "c"],
+            name="color",
+            dtype=pd.CategoricalDtype(order),
+        )
+        scale = Nominal()._setup(x, Color())
+
+        assert scale._legend[0] == order
+        assert_array_equal(scale._pipeline[0](x), [1, 3, 0, 3])
 
     # BOOL-008
     def test_bool_008_non_boolean_categorical_palette_behavior_remains_unchanged_after_boolean_support(
         self,
     ):
-        assert True
+
+        x = pd.Series(["a", "c", "b", "c"], name="color")
+        palettes = [
+            ("flare", color_palette("flare", 3)),
+            (["r", "g", "b"], color_palette(["r", "g", "b"])),
+            ({"a": "r", "c": "g", "b": "b"}, color_palette(["r", "g", "b"])),
+        ]
+
+        for palette, colors in palettes:
+            scale = Nominal(palette)._setup(x, Color())
+            assert_array_equal(scale(x), [colors[0], colors[1], colors[2], colors[1]])
 
     # BOOL-008
     def test_bool_008_non_boolean_categorical_resulting_colors_remain_unchanged_after_boolean_support(
         self,
     ):
-        assert True
+
+        x = pd.Series(["a", "c", "b", "c"], name="color")
+        prop = Color()
+        scale = prop.default_scale(x)
+        colors = color_palette(n_colors=3)
+
+        assert isinstance(scale, Nominal)
+        assert_array_equal(
+            scale._setup(x, prop)(x),
+            [colors[0], colors[1], colors[2], colors[1]],
+        )
 
 
 class TestBooleanColorContract:
