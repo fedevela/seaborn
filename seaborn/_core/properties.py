@@ -616,7 +616,6 @@ class Color(Property):
 
     def _get_categorical_mapping(self, scale, data):
         """Define mapping as lookup in list of discrete color values."""
-
         levels = categorical_order(data, scale.order)
         n = len(levels)
         values = scale.values
