@@ -21,6 +21,12 @@ class PolyFit(Stat):
 
     def _fit_predict(self, data):
 
+        # Architecture seam (POLYFIT-004, POLYFIT-005): This method is the
+        # single-group boundary. It owns pair completeness and post-filter
+        # sufficiency, and its stable contract is a schema-compatible x/y
+        # DataFrame that may contain zero rows. It must not depend on GroupBy or
+        # reach outside the supplied frame, so group isolation remains the
+        # caller's responsibility and an insufficient group is an ordinary result.
         # Architecture seam (POLYFIT-001, POLYFIT-002, POLYFIT-003, POLYFIT-007):
         # This method owns complete-pair selection for one group. Keep the paired
         # tabular representation intact through that boundary; only then project
@@ -68,6 +74,11 @@ class PolyFit(Stat):
 
     def __call__(self, data, groupby, orient, scales):
 
+        # Integration seam (POLYFIT-004, POLYFIT-005): GroupBy owns partitioning
+        # and calls the single-group boundary; PolyFit owns only the transformation
+        # of each partition. Dependency points from grouped orchestration to
+        # _fit_predict, whose schema-compatible empty result lets aggregation
+        # continue without a special failure channel or cross-group fallback.
         # POLYFIT-004, POLYFIT-005 (grouped orchestration logic):
         # FOR EACH group selected by groupby, HAND OFF that group's rows alone to
         # the single-group fit procedure; preserve group boundaries at every call.
