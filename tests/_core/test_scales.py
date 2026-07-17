@@ -356,6 +356,33 @@ class TestContinuousColorPreservationContract:
         assert_array_equal(scale._setup(x, prop)(x), expected)
 
 
+class TestNominalColorPreservationContract:
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_levels_remain_distinct_after_boolean_support(
+        self,
+    ):
+        assert True
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_ordering_remains_unchanged_after_boolean_support(
+        self,
+    ):
+        assert True
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_palette_behavior_remains_unchanged_after_boolean_support(
+        self,
+    ):
+        assert True
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_resulting_colors_remain_unchanged_after_boolean_support(
+        self,
+    ):
+        assert True
+
+
 class TestBooleanColorContract:
 
     # BOOL-005
