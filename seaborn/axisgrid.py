@@ -113,6 +113,10 @@ class Grid(_BaseGrid):
             Returns self for easy chaining.
 
         """
+        # ARCHITECTURE — GUID: HUE-004, HUE-005
+        # ``label_order`` is the generic legend boundary: its producer owns
+        # selection and ordering, while this consumer only resolves matching
+        # handles (or neutral fallbacks) and preserves the supplied sequence.
         # Find the data for the legend
         if legend_data is None:
             legend_data = self._legend_data
@@ -2155,6 +2159,11 @@ def pairplot(
 
     # Add a legend
     if hue is not None:
+        # ARCHITECTURE — GUID: HUE-004, HUE-005
+        # ``pairplot`` owns the partial-hue adapter between the caller contract
+        # and ``Grid.add_legend(label_order=...)``. PairGrid remains responsible
+        # for typed hue resolution and handle collection; the adapter must emit
+        # only normalized requested labels, in caller order, at this seam.
         # PSEUDOCODE — GUID: HUE-004, HUE-005
         # INPUT: the caller's hue_order and the hue handles collected by PairGrid.
         # IF hue_order specifies a partial sequence:
