@@ -1242,6 +1242,16 @@ class PairGrid(Grid):
         super().__init__()
 
         # Sort out the variables that define the grid
+        # PSEUDOCODE [PAIR-MI-001, PAIR-MI-002, PAIR-MI-006]:
+        # INPUT: the caller-owned DataFrame and no explicit grid variables.
+        # DISCOVER each eligible numeric column by its complete column identifier.
+        # RETAIN each identifier as one atomic variable, including tuple identifiers,
+        # and preserve the DataFrame column iteration order when assigning both axes.
+        # DO NOT flatten, rename, reorder, or write through the source columns index.
+        # HAND OFF the resulting variable sequences to grid construction; if either
+        # sequence is empty, follow the established no-variables failure path.
+        # OUTPUT: a grid whose variable state is independent of, and does not mutate,
+        # the caller's MultiIndex column identifiers or ordering.
         numeric_cols = self._find_numeric_cols(data)
         if hue in numeric_cols:
             numeric_cols.remove(hue)
@@ -1415,6 +1425,12 @@ class PairGrid(Grid):
             called ``color`` and  ``label``.
 
         """
+        # PSEUDOCODE [PAIR-MI-004]:
+        # IF the grid is square, enumerate every lower-triangle ordered pair and,
+        # unless corner mode suppresses it, every upper-triangle ordered pair.
+        # ELSE enumerate each row/column pair whose complete identifiers differ.
+        # HAND OFF every enumerated pair exactly once to bivariate mapping, leaving
+        # diagonal cells exclusively to diagonal mapping.
         if self.square_grid:
             self.map_lower(func, **kwargs)
             if not self._corner:
@@ -1441,6 +1457,15 @@ class PairGrid(Grid):
         """
         # Add special diagonal axes for the univariate plot
         if self.diag_axes is None:
+            # PSEUDOCODE [PAIR-MI-003, PAIR-MI-004]:
+            # FOR each row variable and column variable, compare complete identifiers.
+            # WHEN they match, append the complete identifier as one atomic entry and
+            # create exactly one diagonal plotting axis for that variable.
+            # MATERIALIZE diagonal variable state as a one-dimensional sequence whose
+            # entries remain atomic even when an identifier is tuple-valued.
+            # LATER, resolve each stored entry against the DataFrame by that complete
+            # identifier; REQUIRE a one-dimensional Series, never a partial-level or
+            # multiple-column selection, before handing it to the univariate plotter.
             diag_vars = []
             diag_axes = []
             for i, y_var in enumerate(self.y_vars):
@@ -1573,6 +1598,14 @@ class PairGrid(Grid):
 
     def _plot_bivariate(self, x_var, y_var, ax, func, **kwargs):
         """Draw a bivariate plot on the specified axes."""
+        # PSEUDOCODE [PAIR-MI-003, PAIR-MI-004]:
+        # RECEIVE one established off-diagonal cell and its complete x/y identifiers.
+        # SELECT each vector independently by its complete identifier and verify that
+        # each resolution is one-dimensional; never substitute a shared level value.
+        # APPLY the established missing-data and hue flow without changing identifiers.
+        # HAND OFF the two corresponding Series to the bivariate plotter for this cell.
+        # IF a complete identifier cannot resolve, propagate the established lookup
+        # failure; do not retry with a partial tuple or conflate matching level labels.
         if "hue" not in signature(func).parameters:
             self._plot_bivariate_iter_hue(x_var, y_var, ax, func, **kwargs)
             return
