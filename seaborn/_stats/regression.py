@@ -21,6 +21,12 @@ class PolyFit(Stat):
 
     def _fit_predict(self, data):
 
+        # Architecture seam (POLYFIT-001, POLYFIT-002, POLYFIT-003, POLYFIT-007):
+        # This method owns complete-pair selection for one group. Keep the paired
+        # tabular representation intact through that boundary; only then project
+        # it into the separate numeric inputs consumed by numpy. The sufficiency
+        # check, fit, and prediction-grid construction depend on that projection,
+        # while grouping and missing-value policy remain outside numpy's boundary.
         # POLYFIT-001, POLYFIT-002, POLYFIT-003, POLYFIT-007:
         # INPUT: fitting observations containing corresponding x and y coordinates.
         # DERIVE one completeness mask that is true only where both coordinates
