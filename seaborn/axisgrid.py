@@ -1509,7 +1509,8 @@ class PairGrid(Grid):
             # the PairGrid-owned seam between grid topology and univariate data
             # resolution. Its container representation must preserve each complete
             # column identifier as one entry, including tuple-valued identifiers.
-            self.diag_vars = np.array(diag_vars, np.object_)
+            self.diag_vars = np.empty(len(diag_vars), np.object_)
+            self.diag_vars[:] = diag_vars
             self.diag_axes = np.array(diag_axes, np.object_)
 
         if "hue" not in signature(func).parameters:
