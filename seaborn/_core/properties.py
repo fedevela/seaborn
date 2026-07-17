@@ -541,6 +541,18 @@ class Color(Property):
     legend = True
     normed = True
 
+    # ARCHITECTURE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006, BOOL-010]
+    # Ownership: Color.default_scale is the property-specific routing seam for boolean
+    # color data. It may depend on variable_type and the existing Nominal contract, but
+    # the shared Property.default_scale policy must remain unchanged for other semantics.
+    # Boundary: boolean observations leave this seam as a Nominal scale and therefore
+    # must not reach ContinuousBase._setup, whose normalization contract subtracts its
+    # domain endpoints. Nominal._setup retains ownership of level indexing, while
+    # Color._get_categorical_mapping retains ownership of palette allocation and RGBA
+    # conversion, including distinct two-level and valid singleton mappings.
+    # Integration: TestBooleanColorContract owns scale-routing/mapping regression
+    # coverage; TestBar owns the complete objects-interface rendering seam.
+
     # PSEUDOCODE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006]
     # default_scale(data: Series) -> Scale:
     #   INPUT: all observed values for the color semantic, excluding no values here
