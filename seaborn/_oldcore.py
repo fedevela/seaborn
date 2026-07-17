@@ -149,6 +149,10 @@ class HueMapping(SemanticMapping):
             # Use a value that's in the original data vector
             value = self.lookup_table[key]
         except KeyError:
+            # Missing categorical levels are omitted from the plot.
+            if self.norm is None:
+                return (0, 0, 0, 0)
+
             # Use the colormap to interpolate between existing datapoints
             # (e.g. in the context of making a continuous legend)
             try:

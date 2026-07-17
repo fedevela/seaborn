@@ -1280,6 +1280,181 @@ class TestPairGrid:
         for ax in g.diag_axes:
             assert len(ax.collections) == n
 
+    def test_HUE_001_partial_categorical_hue_order_creates_pairplot(self):
+        """GUID: HUE-001 — partial string hue order completes without error."""
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=["a", "c"],
+        )
+
+        assert isinstance(g, ag.PairGrid)
+
+    def test_HUE_002_partial_hue_order_omits_excluded_levels_on_diagonal(self):
+        """GUID: HUE-002 — diagonal plots exclude observations not in order."""
+        order = ["a", "c"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+        expected_count = self.df["a"].isin(order).sum()
+
+        for ax in g.diag_axes:
+            count = sum(patch.get_height() for patch in ax.patches)
+            assert count == expected_count
+
+    def test_HUE_002_partial_hue_order_omits_excluded_levels_off_diagonal(self):
+        """GUID: HUE-002 — off-diagonal plots exclude observations not in order."""
+        order = ["a", "c"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+        expected_count = self.df["a"].isin(order).sum()
+
+        for i, j in zip(*np.where(~np.eye(2, dtype=bool))):
+            offsets = g.axes[i, j].collections[0].get_offsets()
+            assert len(offsets) == expected_count
+
+    def test_HUE_003_partial_hue_order_keeps_included_levels_on_diagonal(self):
+        """GUID: HUE-003 — diagonal plots retain included observations."""
+        order = ["a", "c"]
+        included = self.df[self.df["a"].isin(order)]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        for ax in g.diag_axes:
+            count = sum(patch.get_height() for patch in ax.patches)
+            assert count == len(included)
+
+    def test_HUE_003_partial_hue_order_keeps_included_levels_off_diagonal(self):
+        """GUID: HUE-003 — off-diagonal plots retain included observations."""
+        order = ["a", "c"]
+        included = self.df[self.df["a"].isin(order)]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        for i, j in zip(*np.where(~np.eye(2, dtype=bool))):
+            x, y = g.axes[i, j].collections[0].get_offsets().T
+            npt.assert_array_equal(x, included[["x", "y"][j]])
+            npt.assert_array_equal(y, included[["x", "y"][i]])
+
+    def test_HUE_004_pairplot_partial_hue_order_preserves_supplied_legend_sequence(self):
+        """GUID: HUE-004 — included legend levels follow partial hue_order."""
+        order = ["c", "a"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        labels = [text.get_text() for text in g._legend.get_texts()]
+        assert labels == order
+
+    def test_HUE_005_pairplot_partial_hue_order_excludes_omitted_levels_from_legend(self):
+        """GUID: HUE-005 — omitted hue levels have no pairplot legend entry."""
+        order = ["a", "c"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        labels = [text.get_text() for text in g._legend.get_texts()]
+        omitted = set(self.df["a"].unique()).difference(order)
+        assert labels == order
+        assert omitted
+        assert omitted.isdisjoint(labels)
+
+    def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_plotting(self):
+        """GUID: HUE-006 — a complete hue_order preserves pairplot plotting."""
+        order = ["c", "a", "b"]
+        palette = color_palette("deep", len(order))
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            palette=palette, diag_kind="hist",
+        )
+
+        assert isinstance(g, ag.PairGrid)
+        for ax in g.diag_axes:
+            count = sum(patch.get_height() for patch in ax.patches)
+            assert count == len(self.df)
+
+        for i, j in zip(*np.where(~np.eye(2, dtype=bool))):
+            points = g.axes[i, j].collections[0]
+            offsets = points.get_offsets()
+            npt.assert_array_equal(offsets[:, 0], self.df[["x", "y"][j]])
+            npt.assert_array_equal(offsets[:, 1], self.df[["x", "y"][i]])
+
+            for level, color in zip(order, palette):
+                color = mpl.colors.to_rgba(color)
+                level_points = offsets[np.all(points.get_facecolors() == color, axis=1)]
+                expected = self.df.loc[self.df["a"] == level, [
+                    ["x", "y"][j], ["x", "y"][i],
+                ]]
+                npt.assert_array_equal(level_points, expected)
+
+    def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_legend(self):
+        """GUID: HUE-006 — a complete hue_order preserves pairplot legend behavior."""
+        order = ["c", "a", "b"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        labels = [text.get_text() for text in g._legend.get_texts()]
+        assert labels == order
+
+    def test_HUE_007_partial_categorical_hue_order_executes_and_excludes_omitted_levels(self):
+        """GUID: HUE-007 — a partial hue_order succeeds and filters omitted levels."""
+        order = ["c", "a"]
+        included = self.df[self.df["a"].isin(order)]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        assert isinstance(g, ag.PairGrid)
+        for ax in g.diag_axes:
+            count = sum(patch.get_height() for patch in ax.patches)
+            assert count == len(included)
+
+        for i, j in zip(*np.where(~np.eye(2, dtype=bool))):
+            offsets = g.axes[i, j].collections[0].get_offsets()
+            npt.assert_array_equal(offsets[:, 0], included[["x", "y"][j]])
+            npt.assert_array_equal(offsets[:, 1], included[["x", "y"][i]])
+
+    def test_HUE_007_partial_categorical_hue_order_preserves_supplied_plot_sequence(self):
+        """GUID: HUE-007 — included levels plot in the supplied sequence."""
+        order = ["c", "a"]
+        palette = color_palette("deep", len(order))
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            palette=palette, diag_kind="hist",
+        )
+
+        points = g.axes[1, 0].collections[0]
+        offsets = points.get_offsets()
+        for level, color in zip(order, palette):
+            color = mpl.colors.to_rgba(color)
+            level_points = offsets[np.all(points.get_facecolors() == color, axis=1)]
+            expected = self.df.loc[self.df["a"] == level, ["x", "y"]]
+            npt.assert_array_equal(level_points, expected)
+
+    def test_HUE_007_partial_categorical_hue_order_limits_legend_to_supplied_sequence(self):
+        """GUID: HUE-007 — the legend contains only the supplied levels in order."""
+        order = ["c", "a"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        labels = [text.get_text() for text in g._legend.get_texts()]
+        omitted = set(self.df["a"].unique()).difference(order)
+        assert labels == order
+        assert omitted
+        assert omitted.isdisjoint(labels)
+
     def test_pairplot_reg(self):
 
         vars = ["x", "y", "z"]

@@ -1289,6 +1289,7 @@ class PairGrid(Grid):
         self.hue_kws = hue_kws if hue_kws is not None else {}
 
         self._orig_palette = palette
+
         self._hue_order = hue_order
         self.palette = self._get_palette(data, hue, hue_order, palette)
         self._legend_data = {}
@@ -1456,6 +1457,11 @@ class PairGrid(Grid):
             else:
                 hue = None
 
+            if hue is not None:
+                hue_in_order = hue.isin(self._hue_order)
+                vector = vector[hue_in_order]
+                hue = hue[hue_in_order]
+
             if self._dropna:
                 not_na = vector.notna()
                 if hue is not None:
@@ -1555,6 +1561,10 @@ class PairGrid(Grid):
             axes_vars.append(self._hue_var)
 
         data = self.data[axes_vars]
+
+        if self._hue_var is not None:
+            data = data[data[self._hue_var].isin(self._hue_order)]
+
         if self._dropna:
             data = data.dropna()
 
@@ -2140,7 +2150,11 @@ def pairplot(
 
     # Add a legend
     if hue is not None:
-        grid.add_legend()
+        if hue_order is None:
+            grid.add_legend()
+        else:
+            legend_order = list(map(utils.to_utf8, hue_order))
+            grid.add_legend(label_order=legend_order)
 
     grid.tight_layout()
 
