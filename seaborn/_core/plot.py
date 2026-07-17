@@ -1488,6 +1488,19 @@ class Plotter:
 
                 axes_df = self._filter_subplot_data(df, view)
 
+                # PSEUDOCODE CONTRACT [BOOL-009]
+                # Verification: test_bool_009_supported_missing_boolean_colors_keep_established_handling_when_rendered
+                # INPUT scaled plot rows, including supported missing boolean colors
+                # represented by the same missing sentinel as other missing semantics.
+                # IF the mark requests preservation of missing rows:
+                #   APPLY the existing coordinate-nulling/masking path unchanged.
+                # ELSE:
+                #   DROP rows with missing scaled values before grouping and rendering.
+                # HAND OFF only the rows retained by that established policy; do not
+                # inspect boolean origin or create a boolean-specific rendering path.
+                # FAILURE PATH: preserve existing filtering/grouping failures without
+                # substituting a color or artist for the missing observation.
+
                 with pd.option_context("mode.use_inf_as_na", True):
                     if keep_na:
                         # The simpler thing to do would be x.dropna().reindex(x.index).

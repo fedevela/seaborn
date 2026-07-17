@@ -605,6 +605,20 @@ class Color(Property):
 
     def default_scale(self, data: Series) -> Scale:
         """Initialize a nominal scale for categorical, including boolean, data."""
+
+        # PSEUDOCODE CONTRACT [BOOL-009]
+        # Verification: test_bool_009_unsupported_missing_boolean_forms_require_no_new_behavior
+        # INPUT color observations already accepted by the semantic data pipeline.
+        # CLASSIFY them with the existing boolean-as-categorical rule, including only
+        # nullable boolean forms that this classification path already supports.
+        # IF the accepted observations classify as categorical boolean data:
+        #   SELECT the existing nominal scale and preserve its missing-value handling.
+        # ELSE:
+        #   DELEGATE to the established color-scale selection without coercing an
+        #   unsupported missing boolean form into the supported contract.
+        # FAILURE PATH: preserve the existing upstream rejection or downstream scale
+        # error; BOOL-009 introduces no new representation, recovery, or fallback.
+
         var_type = variable_type(data, boolean_type="categorical")
         if var_type == "categorical":
             return Nominal()
@@ -677,6 +691,20 @@ class Color(Property):
 
     def _get_categorical_mapping(self, scale, data):
         """Define mapping as lookup in list of discrete color values."""
+
+        # PSEUDOCODE CONTRACT [BOOL-009]
+        # Verification: test_bool_009_supported_missing_boolean_colors_keep_established_handling_when_rendered
+        # INPUT supported boolean color observations after nominal scale selection.
+        # DERIVE palette levels from non-missing truth values only; a missing value
+        # must not become a level or consume a palette entry.
+        # MAP each finite nominal index to its established truth-value color.
+        # FOR each missing nominal index, retain the existing all-missing color vector.
+        # HAND OFF mapped colors unchanged to the plot pipeline so its established
+        # missing-row policy, rather than a boolean-specific branch, controls rendering.
+        # OUTPUT the same rendered omission/masking behavior used before boolean color
+        # correction while preserving colors for all present observations.
+        # FAILURE PATH: propagate existing level, palette, and mapping failures; do not
+        # synthesize a color or add recovery specifically for a missing boolean value.
 
         # ARCHITECTURE CONTRACT [BOOL-008]
         # Ownership: Color._get_categorical_mapping remains the single owner of
