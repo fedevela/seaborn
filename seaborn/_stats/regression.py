@@ -40,6 +40,16 @@ class PolyFit(Stat):
         # IF they do not remain, follow the existing insufficient-data output path.
         # OUTPUT only predictions derived from complete fitting pairs; never pass a
         # missing coordinate or an imputed/incomplete observation to fit or grid input.
+        # POLYFIT-004, POLYFIT-005 (single-group logic):
+        # INPUT: only the observations belonging to the current group, as handed
+        # off by the grouped caller; keep this group isolated from every other group.
+        # FILTER this group's incomplete x/y pairs before evaluating sufficiency.
+        # EVALUATE the requested-order sufficiency predicate using only this group's
+        # retained complete coordinates; never borrow observations across groups.
+        # IF the retained coordinates are insufficient, RETURN the schema-compatible
+        # empty fitted result as a normal group outcome without attempting a fit.
+        # IF no complete pair remains, TAKE the same empty-result transition.
+        # OTHERWISE, FIT and RETURN points derived only from this group's retained pairs.
         data = data.dropna(subset=["x", "y"])
         x = np.asarray(data["x"].tolist())
         y = np.asarray(data["y"].tolist())
@@ -58,6 +68,14 @@ class PolyFit(Stat):
 
     def __call__(self, data, groupby, orient, scales):
 
+        # POLYFIT-004, POLYFIT-005 (grouped orchestration logic):
+        # FOR EACH group selected by groupby, HAND OFF that group's rows alone to
+        # the single-group fit procedure; preserve group boundaries at every call.
+        # ACCEPT either fitted points or the normal empty result from each group.
+        # WHEN one group returns empty for insufficient or zero complete pairs,
+        # CONTINUE processing all remaining groups and do not treat it as failure.
+        # COMBINE only the points each group returned; an empty group contributes
+        # no fitted points and cannot supply observations to any other group.
         return groupby.apply(data, self._fit_predict)
 
 
