@@ -678,6 +678,18 @@ class Color(Property):
     def _get_categorical_mapping(self, scale, data):
         """Define mapping as lookup in list of discrete color values."""
 
+        # ARCHITECTURE CONTRACT [BOOL-008]
+        # Ownership: Color._get_categorical_mapping remains the single owner of
+        # categorical palette selection, RGB(A) standardization, and index lookup.
+        # Boundary: this seam receives the level order and nominal indices owned by
+        # Nominal._setup; boolean routing belongs to Color.default_scale and must not
+        # alter the shared mapping contract for supported non-boolean categories.
+        # Dependency direction: Nominal._setup -> Color.get_mapping dispatch -> this
+        # categorical mapping. Palette allocation depends on established levels, while
+        # the nominal scale remains independent of color selection and representation.
+        # Integration: TestNominalColorPreservationContract owns regression coverage
+        # for palette behavior and resulting colors at this property seam.
+
         # PSEUDOCODE CONTRACT [BOOL-008]
         # Verification: test_bool_008_non_boolean_categorical_palette_behavior_remains_unchanged_after_boolean_support
         # Verification: test_bool_008_non_boolean_categorical_resulting_colors_remain_unchanged_after_boolean_support

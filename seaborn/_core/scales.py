@@ -152,6 +152,17 @@ class Nominal(Scale):
 
     _priority: ClassVar[int] = 3
 
+    # ARCHITECTURE CONTRACT [BOOL-008]
+    # Ownership: Nominal._setup remains the single owner of categorical level
+    # discovery, explicit/category-derived ordering, unit indexing, and legend order.
+    # Boundary: boolean color support may select this existing scale contract, but it
+    # must not add a boolean-specific level or ordering branch within Nominal._setup.
+    # Dependency direction: ordered levels -> nominal unit conversion ->
+    # Property.get_mapping. Property mappings consume nominal indices and must not
+    # rediscover, merge, or reorder the levels established by this scale.
+    # Integration: TestNominalColorPreservationContract owns regression coverage for
+    # non-boolean categorical level distinction and ordering at this scale seam.
+
     def _setup(
         self, data: Series, prop: Property, axis: Axis | None = None,
     ) -> Scale:
