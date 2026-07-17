@@ -21,6 +21,19 @@ class PolyFit(Stat):
 
     def _fit_predict(self, data):
 
+        # POLYFIT-001, POLYFIT-002, POLYFIT-003, POLYFIT-007:
+        # INPUT: fitting observations containing corresponding x and y coordinates.
+        # DERIVE one completeness mask that is true only where both coordinates
+        # are non-null; do not fill, substitute, or otherwise impute either value.
+        # SELECT x and y with that same mask so every retained pair comes from the
+        # same original observation and every incomplete observation is discarded.
+        # HAND OFF only the retained x and retained y to the existing unique-x
+        # sufficiency decision; incomplete observations must not affect that branch.
+        # IF sufficient complete pairs remain, fit using only those retained pairs,
+        # derive the prediction grid from retained x bounds, and evaluate the fit.
+        # IF they do not remain, follow the existing insufficient-data output path.
+        # OUTPUT only predictions derived from complete fitting pairs; never pass a
+        # missing coordinate or an imputed/incomplete observation to fit or grid input.
         x = data["x"]
         y = data["y"]
         if x.nunique() <= self.order:
