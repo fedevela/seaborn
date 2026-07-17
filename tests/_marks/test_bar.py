@@ -109,7 +109,11 @@ class TestBar:
         # ASSERT rendering returns a plot with valid colors for both observations.
         # FAILURE PATH: fail on any scale-setup exception, including boolean subtraction.
 
-        assert True
+        p = Plot(["a", "b"], [1, 2], color=[True, False]).add(Bar()).plot()
+
+        colors = [bar.get_facecolor() for bar in p._figure.axes[0].patches]
+        assert len(colors) == 2
+        assert np.isfinite(colors).all()
 
     # BOOL-004, BOOL-010
     def test_bool_004_bool_010_reported_boolean_color_plot_renders_distinct_bars(self):
@@ -121,7 +125,12 @@ class TestBar:
         # ASSERT their face colors differ; fail if True and False collapse to one color.
         # FAILURE PATH: fail on any construction, scale-setup, or rendering exception.
 
-        assert True
+        p = Plot(["a", "b"], [1, 2], color=[True, False]).add(Bar()).plot()
+
+        colors = [bar.get_facecolor() for bar in p._figure.axes[0].patches]
+        assert len(colors) == 2
+        assert np.isfinite(colors).all()
+        assert not np.array_equal(colors[0], colors[1])
 
     def test_zero_height_skipped(self):
 

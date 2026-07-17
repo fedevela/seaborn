@@ -573,6 +573,13 @@ class Color(Property):
     #   FAILURE PATH: propagate existing invalid palette/scale errors; never recover
     #                 from them by routing boolean data through continuous subtraction.
 
+    def default_scale(self, data: Series) -> Scale:
+        """Initialize a nominal scale for categorical, including boolean, data."""
+        var_type = variable_type(data, boolean_type="categorical")
+        if var_type == "categorical":
+            return Nominal()
+        return super().default_scale(data)
+
     def standardize(self, val: ColorSpec) -> RGBTuple | RGBATuple:
         # Return color with alpha channel only if the input spec has it
         # This is so that RGBA colors can override the Alpha property

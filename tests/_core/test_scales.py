@@ -324,7 +324,14 @@ class TestBooleanColorContract:
         # ASSERT both mapped results are valid RGB(A) colors.
         # ASSERT the False and True results are unequal; fail on color collapse.
 
-        assert True
+        x = pd.Series([False, True], name="color")
+        prop = Color()
+        scale = prop.default_scale(x)._setup(x, prop)
+
+        colors = scale(x)
+
+        assert np.isfinite(colors).all()
+        assert not np.array_equal(colors[0], colors[1])
 
     # BOOL-003
     def test_bool_003_scale_setup_establishes_domain_without_boolean_subtraction(self):
@@ -335,7 +342,13 @@ class TestBooleanColorContract:
         # ASSERT setup chooses the categorical-level path.
         # FAILURE PATH: fail immediately if setup attempts boolean subtraction.
 
-        assert True
+        x = pd.Series([False, True], name="color")
+        prop = Color()
+
+        scale = prop.default_scale(x)
+        assert isinstance(scale, Nominal)
+
+        scale._setup(x, prop)
 
     # BOOL-006
     def test_bool_006_single_truth_value_maps_without_two_ended_continuous_range(self):
@@ -347,7 +360,16 @@ class TestBooleanColorContract:
         #   ASSERT setup does not request or synthesize a continuous endpoint pair.
         #   FAILURE PATH: fail on subtraction, an invalid color, or a missing mapping.
 
-        assert True
+        prop = Color()
+        for value in [False, True]:
+            x = pd.Series([value], name="color")
+
+            scale = prop.default_scale(x)
+            assert isinstance(scale, Nominal)
+
+            color = scale._setup(x, prop)(x)
+            assert color.shape[0] == 1
+            assert np.isfinite(color).all()
 
 
 class TestNominal:
