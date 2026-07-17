@@ -1368,23 +1368,63 @@ class TestPairGrid:
 
     def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_plotting(self):
         """GUID: HUE-006 — a complete hue_order preserves pairplot plotting."""
-        assert True
+        # GIVEN categorical string hue data and an explicit order containing
+        # every observed hue level, retaining a non-default level sequence
+        # WHEN pairplot builds histogram diagonals and scatter off-diagonals
+        # THEN require successful PairGrid creation
+        # AND for each diagonal axis, require the plotted observation total to
+        # equal the source-row total across every supplied hue level
+        # AND for each off-diagonal axis and each supplied level in sequence,
+        # require plotted coordinates to equal that level's source coordinates
+        # FAILURE: any exception, missing observation, extra observation, or
+        # level plotted out of the supplied sequence violates HUE-006
 
     def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_legend(self):
         """GUID: HUE-006 — a complete hue_order preserves pairplot legend behavior."""
-        assert True
+        # GIVEN categorical string hue data and an explicit order containing
+        # every observed hue level in a non-default sequence
+        # WHEN pairplot constructs its legend from the completed plot
+        # THEN read the legend labels in display order
+        # AND require those labels to equal the complete supplied hue_order
+        # FAILURE: a missing, additional, duplicated, or reordered label
+        # violates HUE-006
 
     def test_HUE_007_partial_categorical_hue_order_executes_and_excludes_omitted_levels(self):
         """GUID: HUE-007 — a partial hue_order succeeds and filters omitted levels."""
-        assert True
+        # GIVEN categorical string hue data and an explicit hue_order that
+        # includes multiple observed levels and omits at least one other level
+        # WHEN pairplot builds histogram diagonals and scatter off-diagonals
+        # THEN require successful PairGrid creation
+        # AND derive included source rows by membership in the supplied order
+        # AND for every diagonal and off-diagonal axis, require the plotted
+        # observation count to equal the included-row count
+        # AND require no plotted coordinates from any omitted source row
+        # FAILURE: an exception or any omitted observation reaching an axis
+        # violates HUE-007
 
     def test_HUE_007_partial_categorical_hue_order_preserves_supplied_plot_sequence(self):
         """GUID: HUE-007 — included levels plot in the supplied sequence."""
-        assert True
+        # GIVEN categorical string hue data and a partial hue_order whose
+        # sequence differs from the source level order
+        # WHEN pairplot renders the included hue subsets
+        # THEN inspect a deterministic off-diagonal axis
+        # AND pair each rendered hue artist with the level at the same position
+        # in the supplied order
+        # AND require each artist's coordinates to equal only that level's
+        # source coordinates
+        # FAILURE: swapped artists, merged levels, or coordinates belonging to
+        # an omitted level violate HUE-007
 
     def test_HUE_007_partial_categorical_hue_order_limits_legend_to_supplied_sequence(self):
         """GUID: HUE-007 — the legend contains only the supplied levels in order."""
-        assert True
+        # GIVEN categorical string hue data and a partial explicit hue_order
+        # WHEN pairplot completes and exposes its legend
+        # THEN read legend labels in display order
+        # AND require the labels to equal the supplied order exactly
+        # AND derive omitted levels from observed levels minus supplied levels
+        # AND require the legend labels to be disjoint from omitted levels
+        # FAILURE: an omitted, additional, duplicated, or reordered legend
+        # label violates HUE-007
 
     def test_pairplot_reg(self):
 
