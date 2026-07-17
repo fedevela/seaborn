@@ -61,11 +61,12 @@ class PolyFit(Stat):
         y = np.asarray(data["y"].tolist())
         if np.unique(x).size <= self.order:
             # TODO warn?
-            xx = yy = []
-        else:
-            p = np.polyfit(x, y, self.order)
-            xx = np.linspace(x.min(), x.max(), self.gridsize)
-            yy = np.polyval(p, xx)
+            empty = np.array([], dtype=float)
+            return pd.DataFrame({"x": empty, "y": empty})
+
+        p = np.polyfit(x, y, self.order)
+        xx = np.linspace(x.min(), x.max(), self.gridsize)
+        yy = np.polyval(p, xx)
 
         return pd.DataFrame(dict(x=xx, y=yy))
 

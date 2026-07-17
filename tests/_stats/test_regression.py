@@ -111,19 +111,58 @@ class TestPolyFit:
         self,
     ):
         """GUID: POLYFIT-004."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, 1, 2, 10, np.nan, 12],
+            "y": [0, np.nan, 2, 20, 999, 24],
+            "group": ["a", "a", "a", "b", "b", "b"],
+        })
+
+        result = PolyFit(order=1, gridsize=3)(
+            data, GroupBy(["group"]), "x", {}
+        )
+
+        expected = pd.DataFrame({
+            "x": [0., 1., 2., 10., 11., 12.],
+            "y": [0., 1., 2., 20., 22., 24.],
+            "group": ["a", "a", "a", "b", "b", "b"],
+        })
+        pd.testing.assert_frame_equal(result, expected)
 
     def test_polyfit_005_insufficient_group_returns_no_points_while_sufficient_group_completes(
         self,
     ):
         """GUID: POLYFIT-005."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, 1, 2, 10, 11],
+            "y": [0, 1, 4, 20, np.nan],
+            "group": ["sufficient"] * 3 + ["insufficient"] * 2,
+        })
+
+        result = PolyFit(order=2, gridsize=3)(
+            data, GroupBy(["group"]), "x", {}
+        )
+
+        assert result["group"].unique().tolist() == ["sufficient"]
+        assert_array_equal(result["x"], [0, 1, 2])
+        assert_array_almost_equal(result["y"], [0, 1, 4])
 
     def test_polyfit_005_group_with_no_complete_pairs_returns_no_points_while_other_groups_complete(
         self,
     ):
         """GUID: POLYFIT-005."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, 1, 10, np.nan],
+            "y": [1, 3, np.nan, 99],
+            "group": ["complete", "complete", "empty", "empty"],
+        })
+
+        result = PolyFit(order=1, gridsize=3)(
+            data, GroupBy(["group"]), "x", {}
+        )
+
+        assert result["group"].unique().tolist() == ["complete"]
+        assert_array_equal(result["x"], [0, .5, 1])
+        assert_array_almost_equal(result["y"], [1, 2, 3])
 
     def test_polyfit_007_null_coordinates_are_not_imputed_for_fitting(
         self, monkeypatch
