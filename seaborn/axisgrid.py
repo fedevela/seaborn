@@ -1183,6 +1183,7 @@ class PairGrid(Grid):
     See the :ref:`tutorial <grid_tutorial>` for more information.
 
     """
+
     def __init__(
         self, data, *, hue=None, vars=None, x_vars=None, y_vars=None,
         hue_order=None, palette=None, hue_kws=None, corner=False, diag_sharey=True,
@@ -1246,17 +1247,16 @@ class PairGrid(Grid):
         if hue in numeric_cols:
             numeric_cols.remove(hue)
         if vars is not None:
-            x_vars = list(vars)
-            y_vars = list(vars)
+            x_vars = self._normalize_vars(data, vars)
+            y_vars = list(x_vars)
         if x_vars is None:
             x_vars = numeric_cols
+        else:
+            x_vars = self._normalize_vars(data, x_vars)
         if y_vars is None:
             y_vars = numeric_cols
-
-        if np.isscalar(x_vars):
-            x_vars = [x_vars]
-        if np.isscalar(y_vars):
-            y_vars = [y_vars]
+        else:
+            y_vars = self._normalize_vars(data, y_vars)
 
         self.x_vars = x_vars = list(x_vars)
         self.y_vars = y_vars = list(y_vars)
@@ -1472,7 +1472,7 @@ class PairGrid(Grid):
                 for ax in diag_axes[1:]:
                     share_axis(diag_axes[0], ax, "y")
 
-            self.diag_vars = np.array(diag_vars, np.object_)
+            self.diag_vars = diag_vars
             self.diag_axes = np.array(diag_axes, np.object_)
 
         if "hue" not in signature(func).parameters:
@@ -1668,6 +1668,20 @@ class PairGrid(Grid):
             if variable_type(data[col]) == "numeric":
                 numeric_cols.append(col)
         return numeric_cols
+
+    @staticmethod
+    def _normalize_vars(data, vars):
+        """Convert variable selections to a list of atomic column labels."""
+        if (
+            isinstance(data.columns, pd.MultiIndex)
+            and isinstance(vars, tuple)
+            and len(vars) == data.columns.nlevels
+            and vars in data.columns
+        ):
+            return [vars]
+        if np.isscalar(vars):
+            return [vars]
+        return list(vars)
 
 
 class JointGrid(_BaseGrid):

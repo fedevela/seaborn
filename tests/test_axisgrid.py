@@ -1280,6 +1280,181 @@ class TestPairGrid:
 
         assert len(get_legend_handles(g._legend)) == len(self.df["a"].unique())
 
+    @staticmethod
+    def _multiindex_df():
+        columns = pd.MultiIndex.from_tuples([
+            ("A", "1"), ("A", "2"), ("B", "1"), ("B", "2"),
+        ])
+        data = np.arange(40, dtype=float).reshape(10, 4)
+        return pd.DataFrame(data, columns=columns)
+
+    def test_pair_mi_001_default_multiindex_pairplot_does_not_raise_keyerror(self):
+        """PAIR-MI-001: Default pairplot construction does not raise KeyError."""
+        g = ag.pairplot(self._multiindex_df())
+
+        assert isinstance(g, ag.PairGrid)
+
+    def test_pair_mi_002_default_selection_keeps_all_tuple_columns_in_order(self):
+        """PAIR-MI-002: Numeric MultiIndex variables retain tuple identity and order."""
+        df = self._multiindex_df()
+        g = ag.pairplot(df)
+
+        expected = list(df.columns)
+        assert g.x_vars == expected
+        assert g.y_vars == expected
+
+    def test_pair_mi_003_plot_data_resolves_complete_tuple_to_distinct_series(self):
+        """PAIR-MI-003: Plot data resolves by complete tuple without conflation."""
+        df = self._multiindex_df()
+        diag_vectors = []
+        pair_vectors = []
+
+        def record_diag(x, **kwargs):
+            diag_vectors.append(x.copy())
+
+        def record_pair(x, y, hue=None, **kwargs):
+            pair_vectors.append((x.copy(), y.copy()))
+
+        g = ag.PairGrid(df)
+        g.map_diag(record_diag)
+        g.map_offdiag(record_pair)
+
+        assert [vector.name for vector in diag_vectors] == list(df.columns)
+        for vector in diag_vectors:
+            tm.assert_series_equal(vector, df[vector.name])
+
+        observed_pairs = {(x.name, y.name) for x, y in pair_vectors}
+        expected_pairs = {
+            (x_var, y_var)
+            for x_var in df.columns
+            for y_var in df.columns
+            if x_var != y_var
+        }
+        assert observed_pairs == expected_pairs
+        for x, y in pair_vectors:
+            tm.assert_series_equal(x, df[x.name])
+            tm.assert_series_equal(y, df[y.name])
+
+    def test_pair_mi_004_four_variables_fill_diagonal_and_all_ordered_pairs(self):
+        """PAIR-MI-004: Four variables produce a complete pairwise plot grid."""
+        g = ag.pairplot(self._multiindex_df())
+
+        assert g.axes.shape == (4, 4)
+        assert len(g.diag_axes) == 4
+        assert all(ax.patches for ax in g.diag_axes)
+        offdiag = [
+            g.axes[i, j]
+            for i in range(4)
+            for j in range(4)
+            if i != j
+        ]
+        assert len(offdiag) == 12
+        assert all(ax.collections for ax in offdiag)
+
+    def test_pair_mi_005_vars_complete_tuples_select_square_grid_in_order(self):
+        """PAIR-MI-005: Ordered tuple vars select the ordered square grid."""
+        df = self._multiindex_df()
+        vars = [("B", "2"), ("A", "1"), ("B", "1")]
+
+        g = ag.pairplot(df, vars=vars)
+
+        assert g.axes.shape == (3, 3)
+        assert g.x_vars == vars
+        assert g.y_vars == vars
+        assert g.square_grid
+
+    def test_pair_mi_005_x_y_complete_tuples_select_grid_columns_rows_in_order(self):
+        """PAIR-MI-005: Ordered tuple x/y vars select ordered columns/rows."""
+        df = self._multiindex_df()
+        x_vars = [("B", "1"), ("A", "2")]
+        y_vars = [("B", "2"), ("A", "1"), ("A", "2")]
+
+        g = ag.pairplot(df, x_vars=x_vars, y_vars=y_vars)
+
+        assert g.axes.shape == (3, 2)
+        assert g.x_vars == x_vars
+        assert g.y_vars == y_vars
+        assert not g.square_grid
+
+    def test_pair_mi_005_shared_level_values_select_distinct_complete_tuples(self):
+        """PAIR-MI-005: Complete tuples disambiguate shared level values."""
+        df = self._multiindex_df()
+        x_vars = [("A", "1"), ("B", "1")]
+        y_vars = [("A", "2"), ("B", "2")]
+
+        g = ag.pairplot(df, x_vars=x_vars, y_vars=y_vars)
+
+        for i, y_var in enumerate(y_vars):
+            for j, x_var in enumerate(x_vars):
+                x, y = g.axes[i, j].collections[0].get_offsets().T
+                assert_array_equal(x, df[x_var])
+                assert_array_equal(y, df[y_var])
+
+    def test_pair_mi_006_pairplot_preserves_multiindex_columns_and_order(self):
+        """PAIR-MI-006: Pairplot leaves source MultiIndex columns unchanged."""
+        df = self._multiindex_df()
+        columns = df.columns.copy()
+
+        ag.pairplot(df)
+
+        tm.assert_index_equal(df.columns, columns, exact=True)
+
+    def test_pair_mi_007_default_single_level_selection_remains_functional(self):
+        """PAIR-MI-007: Default selection retains eligible single-level variables."""
+        g = ag.pairplot(self.df)
+
+        expected = ["x", "y", "z"]
+        assert g.x_vars == expected
+        assert g.y_vars == expected
+        assert g.axes.shape == (3, 3)
+        assert g.square_grid
+
+    def test_pair_mi_007_single_level_diagonal_and_offdiagonal_plots_are_constructed(self):
+        """PAIR-MI-007: Default calls construct established diagonal and off-diagonal plots."""
+        g = ag.pairplot(self.df)
+
+        assert all(ax.patches for ax in g.diag_axes)
+        for i, y_var in enumerate(g.y_vars):
+            for j, x_var in enumerate(g.x_vars):
+                if i == j:
+                    continue
+                x, y = g.axes[i, j].collections[0].get_offsets().T
+                assert_array_equal(x, self.df[x_var])
+                assert_array_equal(y, self.df[y_var])
+
+    def test_pair_mi_007_explicit_single_level_vars_preserve_grid_order(self):
+        """PAIR-MI-007: Explicit vars retain their single-level grid order."""
+        vars = ["z", "x"]
+
+        g = ag.pairplot(self.df, vars=vars)
+
+        assert g.x_vars == vars
+        assert g.y_vars == vars
+        assert g.axes.shape == (2, 2)
+        assert g.square_grid
+        x, y = g.axes[0, 1].collections[0].get_offsets().T
+        assert_array_equal(x, self.df["x"])
+        assert_array_equal(y, self.df["z"])
+
+    def test_pair_mi_007_explicit_single_level_x_y_vars_preserve_grid_arrangement(self):
+        """PAIR-MI-007: Explicit x_vars and y_vars retain grid arrangement and order."""
+        x_vars = ["z", "x"]
+        y_vars = ["y", "z", "x"]
+
+        g = ag.pairplot(
+            self.df, x_vars=x_vars, y_vars=y_vars, diag_kind=None,
+        )
+
+        assert g.x_vars == x_vars
+        assert g.y_vars == y_vars
+        assert g.axes.shape == (3, 2)
+        assert not g.square_grid
+        for i, y_var in enumerate(y_vars):
+            for j, x_var in enumerate(x_vars):
+                x, y = g.axes[i, j].collections[0].get_offsets().T
+                assert_array_equal(x, self.df[x_var])
+                assert_array_equal(y, self.df[y_var])
+
     def test_pairplot(self):
 
         vars = ["x", "y", "z"]
