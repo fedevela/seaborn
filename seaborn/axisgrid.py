@@ -1289,6 +1289,13 @@ class PairGrid(Grid):
         self.hue_kws = hue_kws if hue_kws is not None else {}
 
         self._orig_palette = palette
+
+        # ARCHITECTURE — GUID: HUE-001, HUE-002, HUE-003
+        # PairGrid owns the ordered hue domain. Axes-level plotting functions
+        # consume that domain but must not be responsible for reconciling it
+        # with PairGrid's observations. Partial-order observation selection
+        # therefore belongs at PairGrid's diagonal and bivariate delegation
+        # seams, with `_hue_order` as their shared inclusion contract.
         self._hue_order = hue_order
         self.palette = self._get_palette(data, hue, hue_order, palette)
         self._legend_data = {}
@@ -1456,6 +1463,11 @@ class PairGrid(Grid):
             else:
                 hue = None
 
+            # INTEGRATION SEAM — GUID: HUE-001, HUE-002, HUE-003
+            # This is the diagonal ownership boundary: construct one aligned
+            # PairGrid-owned view of `vector` and `hue` here, before delegating
+            # semantic mapping to the axes-level plotting function below.
+
             # PSEUDOCODE — GUID: HUE-001, HUE-002, HUE-003 (diagonal)
             # IF categorical string hue data is paired with an explicit partial
             # hue order:
@@ -1569,6 +1581,11 @@ class PairGrid(Grid):
             axes_vars.append(self._hue_var)
 
         data = self.data[axes_vars]
+
+        # INTEGRATION SEAM — GUID: HUE-001, HUE-002, HUE-003
+        # This is the bivariate ownership boundary: construct one row-aligned
+        # PairGrid-owned view of `data` here, before splitting it into semantic
+        # vectors and delegating them to the axes-level plotting function.
 
         # PSEUDOCODE — GUID: HUE-001, HUE-002, HUE-003 (off-diagonal)
         # IF categorical string hue data is paired with an explicit partial
