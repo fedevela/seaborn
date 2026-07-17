@@ -319,6 +319,34 @@ class ContinuousBase(Scale):
     values: tuple | str | None = None
     norm: tuple | None = None
 
+    # PSEUDOCODE CONTRACT [BOOL-007]
+    # Verification: test_bool_007_non_boolean_continuous_color_normalization_stays_unchanged
+    # Verification: test_bool_007_non_boolean_continuous_color_transform_remains_unchanged
+    # Verification: test_bool_007_non_boolean_continuous_color_range_remains_unchanged
+    # Verification: test_bool_007_non_boolean_continuous_resulting_colors_remain_unchanged
+    # _setup(data: Series, prop: Property, axis: Axis | None) -> Scale:
+    #   INPUT supported non-boolean continuous color data and its existing scale options.
+    #   COPY the scale so setup preserves the caller's configuration.
+    #   RESOLVE the configured transform and its inverse through the existing transform path.
+    #   ESTABLISH or reuse the axis, then retain its existing unit conversion behavior.
+    #   IF the color property requires normalization:
+    #       IF no explicit normalization range was configured:
+    #           DERIVE the lower and upper bounds from the continuous data extrema.
+    #       ELSE:
+    #           RETAIN the configured lower and upper normalization bounds.
+    #       CONVERT both bounds through the established axis units.
+    #       TRANSFORM the lower bound and the bound span with the resolved transform.
+    #       NORMALIZE each transformed observation against that transformed domain.
+    #   ELSE:
+    #       RETAIN the existing unnormalized property path.
+    #   BUILD the mapping pipeline in unchanged order:
+    #       axis unit conversion -> transform -> normalization -> color mapping.
+    #   HAND OFF the configured scale values/range and normalized observations to the
+    #   existing color mapping, preserving the resulting colors.
+    #   RETURN the configured scale without adding a boolean-specific continuous branch.
+    #   FAILURE PATH: propagate existing unit, transform, normalization-domain, range,
+    #                 and color-mapping errors without fallback or altered recovery.
+
     def _setup(
         self, data: Series, prop: Property, axis: Axis | None = None,
     ) -> Scale:
