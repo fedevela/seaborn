@@ -156,6 +156,21 @@ class Nominal(Scale):
         self, data: Series, prop: Property, axis: Axis | None = None,
     ) -> Scale:
 
+        # PSEUDOCODE CONTRACT [BOOL-008]
+        # Verification: test_bool_008_non_boolean_categorical_levels_remain_distinct_after_boolean_support
+        # Verification: test_bool_008_non_boolean_categorical_ordering_remains_unchanged_after_boolean_support
+        # INPUT supported non-boolean categorical observations and an optional order.
+        # DERIVE levels with the existing categorical ordering procedure:
+        #   IF an explicit order exists, preserve it exactly.
+        #   ELSE IF the data have categorical dtype, preserve their declared categories.
+        #   ELSE preserve the existing unique-level ordering rule and exclude nulls.
+        # FOR each retained level, assign its existing distinct nominal unit index.
+        # CONVERT each observation through that level-to-index relation.
+        # HAND OFF the indices, in unchanged level order, to the property mapping.
+        # OUTPUT the configured nominal pipeline and legend levels in that same order.
+        # FAILURE PATH: preserve existing unknown-level handling as a missing index;
+        # do not merge, reorder, or reinterpret non-boolean levels for boolean support.
+
         new = copy(self)
         if new._tick_params is None:
             new = new.tick()

@@ -677,6 +677,24 @@ class Color(Property):
 
     def _get_categorical_mapping(self, scale, data):
         """Define mapping as lookup in list of discrete color values."""
+
+        # PSEUDOCODE CONTRACT [BOOL-008]
+        # Verification: test_bool_008_non_boolean_categorical_palette_behavior_remains_unchanged_after_boolean_support
+        # Verification: test_bool_008_non_boolean_categorical_resulting_colors_remain_unchanged_after_boolean_support
+        # INPUT the unchanged ordered non-boolean levels from the nominal scale.
+        # SELECT colors through the existing palette branch for scale.values:
+        #   IF mapping, validate every level and read colors in level order.
+        #   ELSE IF list, preserve existing length validation and list behavior.
+        #   ELSE IF tuple, blend the tuple into one color per level.
+        #   ELSE IF palette name, request one palette color per level.
+        #   ELSE IF unspecified, use the current cycle when it covers all levels;
+        #       otherwise use the existing categorical fallback palette.
+        # STANDARDIZE the selected sequence with the existing RGB(A) rules.
+        # FOR each finite nominal index, return the color at that same index.
+        # OUTPUT one unchanged resulting color per mapped non-boolean observation.
+        # FAILURE PATH: preserve existing missing-entry, invalid-length, invalid-palette,
+        # and unsupported-value errors; do not add boolean-specific recovery here.
+
         levels = categorical_order(data, scale.order)
         n = len(levels)
         values = scale.values
