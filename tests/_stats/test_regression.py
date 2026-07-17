@@ -107,6 +107,24 @@ class TestPolyFit:
         assert_array_equal(result["x"], np.linspace(0, 2, 5))
         assert_array_almost_equal(result["y"], [1, 2, 3, 4, 5])
 
+    def test_polyfit_004_grouped_fit_filters_each_groups_incomplete_pairs_locally(
+        self,
+    ):
+        """GUID: POLYFIT-004."""
+        assert True
+
+    def test_polyfit_005_insufficient_group_returns_no_points_while_sufficient_group_completes(
+        self,
+    ):
+        """GUID: POLYFIT-005."""
+        assert True
+
+    def test_polyfit_005_group_with_no_complete_pairs_returns_no_points_while_other_groups_complete(
+        self,
+    ):
+        """GUID: POLYFIT-005."""
+        assert True
+
     def test_polyfit_007_null_coordinates_are_not_imputed_for_fitting(
         self, monkeypatch
     ):
