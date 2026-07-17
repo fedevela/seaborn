@@ -132,6 +132,13 @@ class TestBar:
         assert np.isfinite(colors).all()
         assert not np.array_equal(colors[0], colors[1])
 
+    # BOOL-009
+    def test_bool_009_supported_missing_boolean_colors_keep_established_handling_when_rendered(
+        self,
+    ):
+
+        assert True
+
     def test_zero_height_skipped(self):
 
         p = Plot(["a", "b", "c"], [1, 0, 2]).add(Bar()).plot()

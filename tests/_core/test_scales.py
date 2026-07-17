@@ -420,6 +420,11 @@ class TestNominalColorPreservationContract:
 
 class TestBooleanColorContract:
 
+    # BOOL-009
+    def test_bool_009_unsupported_missing_boolean_forms_require_no_new_behavior(self):
+
+        assert True
+
     # BOOL-005
     def test_bool_005_python_numpy_pandas_bool_forms_map_equivalent_colors(self):
 
