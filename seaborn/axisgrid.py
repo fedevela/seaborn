@@ -1183,6 +1183,14 @@ class PairGrid(Grid):
     See the :ref:`tutorial <grid_tutorial>` for more information.
 
     """
+
+    # ARCHITECTURE [PAIR-MI-001, PAIR-MI-002, PAIR-MI-003, PAIR-MI-004,
+    # PAIR-MI-006]: PairGrid owns column-identifier identity from discovery through
+    # grid traversal. Figure-level pairplot delegates into this boundary; pandas
+    # remains responsible only for resolving a complete identifier to a Series.
+    # Internal variable collections must therefore preserve tuple identifiers as
+    # atomic values and must not write through to the caller-owned columns index.
+
     def __init__(
         self, data, *, hue=None, vars=None, x_vars=None, y_vars=None,
         hue_order=None, palette=None, hue_kws=None, corner=False, diag_sharey=True,
@@ -1497,6 +1505,10 @@ class PairGrid(Grid):
                 for ax in diag_axes[1:]:
                     share_axis(diag_axes[0], ax, "y")
 
+            # REPRESENTATION CONTRACT [PAIR-MI-003, PAIR-MI-004]: diag_vars is
+            # the PairGrid-owned seam between grid topology and univariate data
+            # resolution. Its container representation must preserve each complete
+            # column identifier as one entry, including tuple-valued identifiers.
             self.diag_vars = np.array(diag_vars, np.object_)
             self.diag_axes = np.array(diag_axes, np.object_)
 
@@ -1624,6 +1636,10 @@ class PairGrid(Grid):
         if self._hue_var is not None and self._hue_var not in axes_vars:
             axes_vars.append(self._hue_var)
 
+        # DEPENDENCY BOUNDARY [PAIR-MI-003, PAIR-MI-004]: PairGrid passes pandas
+        # complete identifiers selected from its grid state. Resolution at this
+        # seam must yield one Series per axis variable; partial MultiIndex lookup
+        # and column-label normalization belong outside the pairplot path.
         data = self.data[axes_vars]
         if self._dropna:
             data = data.dropna()
@@ -1696,6 +1712,10 @@ class PairGrid(Grid):
 
     def _find_numeric_cols(self, data):
         """Find which variables in a DataFrame are numeric."""
+        # OWNERSHIP CONTRACT [PAIR-MI-001, PAIR-MI-002, PAIR-MI-006]: this is
+        # PairGrid's default-variable discovery boundary. It supplies an ordered,
+        # grid-owned collection of atomic DataFrame column identifiers without
+        # adapting or mutating the caller-owned columns index.
         numeric_cols = []
         for col in data:
             if variable_type(data[col]) == "numeric":
@@ -2144,6 +2164,9 @@ def pairplot(
 
     # Set up the PairGrid
     grid_kws.setdefault("diag_sharey", diag_kind == "hist")
+    # INTEGRATION SEAM [PAIR-MI-001, PAIR-MI-004, PAIR-MI-006]: pairplot owns
+    # orchestration only. PairGrid owns variable identity, topology, and lookup;
+    # the original DataFrame crosses this seam unchanged.
     grid = PairGrid(data, vars=vars, x_vars=x_vars, y_vars=y_vars, hue=hue,
                     hue_order=hue_order, palette=palette, corner=corner,
                     height=height, aspect=aspect, dropna=dropna, **grid_kws)
