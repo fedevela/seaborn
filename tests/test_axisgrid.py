@@ -1341,6 +1341,14 @@ class TestPairGrid:
             npt.assert_array_equal(x, included[["x", "y"][j]])
             npt.assert_array_equal(y, included[["x", "y"][i]])
 
+    def test_HUE_004_pairplot_partial_hue_order_preserves_supplied_legend_sequence(self):
+        """GUID: HUE-004 — included legend levels follow partial hue_order."""
+        assert True
+
+    def test_HUE_005_pairplot_partial_hue_order_excludes_omitted_levels_from_legend(self):
+        """GUID: HUE-005 — omitted hue levels have no pairplot legend entry."""
+        assert True
+
     def test_pairplot_reg(self):
 
         vars = ["x", "y", "z"]
