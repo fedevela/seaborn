@@ -319,22 +319,41 @@ class TestContinuousColorPreservationContract:
     # BOOL-007
     def test_bool_007_non_boolean_continuous_color_normalization_stays_unchanged(self):
 
-        assert True
+        x = pd.Series([1., 3., 9.], name="color")
+        scale = Continuous(norm=(3, 7))._setup(x, Color())
+
+        normalize = scale._pipeline[2]
+        assert_array_equal(normalize(x), [-.5, 0, 1.5])
 
     # BOOL-007
     def test_bool_007_non_boolean_continuous_color_transform_remains_unchanged(self):
 
-        assert True
+        x = pd.Series([1., 10., 100.], name="color")
+        scale = Continuous(trans="log")._setup(x, Color())
+
+        transform = scale._pipeline[1]
+        assert_array_equal(transform(x), [0, 1, 2])
 
     # BOOL-007
     def test_bool_007_non_boolean_continuous_color_range_remains_unchanged(self):
 
-        assert True
+        x = pd.Series([0., 1., 2.], name="color")
+        colors = ("b", "g")
+        scale = Continuous(colors)._setup(x, Color())
+        expected = color_palette("blend:b,g", as_cmap=True)([0, .5, 1])[:, :3]
+
+        assert_array_equal(scale(x), expected)
 
     # BOOL-007
     def test_bool_007_non_boolean_continuous_resulting_colors_remain_unchanged(self):
 
-        assert True
+        x = pd.Series([1., 3., 9.], name="color")
+        prop = Color()
+        scale = prop.default_scale(x)
+        expected = color_palette("ch:", as_cmap=True)([0, .25, 1])[:, :3]
+
+        assert isinstance(scale, Continuous)
+        assert_array_equal(scale._setup(x, prop)(x), expected)
 
 
 class TestBooleanColorContract:
