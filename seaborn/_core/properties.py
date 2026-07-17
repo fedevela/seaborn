@@ -553,6 +553,17 @@ class Color(Property):
     # Integration: TestBooleanColorContract owns scale-routing/mapping regression
     # coverage; TestBar owns the complete objects-interface rendering seam.
 
+    # ARCHITECTURE CONTRACT [BOOL-005]
+    # Ownership: Color.default_scale owns representation-agnostic classification;
+    # Nominal._setup owns truth-value level identity; Color._get_categorical_mapping
+    # owns palette allocation from those nominal indices.
+    # Boundary: this property receives only forms accepted by the objects data pipeline
+    # and must not coerce, recognize, or otherwise widen that upstream input contract.
+    # Dependency direction: accepted data -> variable_type -> Nominal._setup -> Color
+    # mapping. No scale or property dependency may point back into data acceptance.
+    # Integration: TestBooleanColorContract owns cross-representation equivalence and
+    # rejected-form boundary coverage at the objects-interface color seam.
+
     # PSEUDOCODE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006]
     # default_scale(data: Series) -> Scale:
     #   INPUT: all observed values for the color semantic, excluding no values here
