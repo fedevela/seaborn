@@ -40,9 +40,10 @@ class PolyFit(Stat):
         # IF they do not remain, follow the existing insufficient-data output path.
         # OUTPUT only predictions derived from complete fitting pairs; never pass a
         # missing coordinate or an imputed/incomplete observation to fit or grid input.
-        x = data["x"]
-        y = data["y"]
-        if x.nunique() <= self.order:
+        data = data.dropna(subset=["x", "y"])
+        x = np.asarray(data["x"].tolist())
+        y = np.asarray(data["y"].tolist())
+        if np.unique(x).size <= self.order:
             # TODO warn?
             xx = yy = []
         else:

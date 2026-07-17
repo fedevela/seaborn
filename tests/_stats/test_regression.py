@@ -1,4 +1,6 @@
 
+from unittest.mock import Mock
+
 import numpy as np
 import pandas as pd
 
@@ -51,26 +53,89 @@ class TestPolyFit:
             assert_array_equal(part["x"], grid)
             assert part["y"].diff().diff().dropna().abs().gt(0).all()
 
-    def test_polyfit_001_null_x_observation_is_excluded_before_fitting(self):
+    def test_polyfit_001_null_x_observation_is_excluded_before_fitting(
+        self, monkeypatch
+    ):
         """GUID: POLYFIT-001."""
-        assert True
+        data = pd.DataFrame({"x": [0, pd.NA, 2], "y": [1, 99, 5]})
+        fit = Mock(wraps=np.polyfit)
+        monkeypatch.setattr(np, "polyfit", fit)
 
-    def test_polyfit_001_null_y_observation_is_excluded_before_fitting(self):
+        PolyFit(order=1)._fit_predict(data)
+
+        assert_array_equal(fit.call_args.args[0], [0, 2])
+        assert_array_equal(fit.call_args.args[1], [1, 5])
+
+    def test_polyfit_001_null_y_observation_is_excluded_before_fitting(
+        self, monkeypatch
+    ):
         """GUID: POLYFIT-001."""
-        assert True
+        data = pd.DataFrame({"x": [0, 1, 2], "y": [1, pd.NA, 5]})
+        fit = Mock(wraps=np.polyfit)
+        monkeypatch.setattr(np, "polyfit", fit)
 
-    def test_polyfit_002_incomplete_removal_preserves_original_coordinate_pairs(self):
+        PolyFit(order=1)._fit_predict(data)
+
+        assert_array_equal(fit.call_args.args[0], [0, 2])
+        assert_array_equal(fit.call_args.args[1], [1, 5])
+
+    def test_polyfit_002_incomplete_removal_preserves_original_coordinate_pairs(
+        self, monkeypatch
+    ):
         """GUID: POLYFIT-002."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, np.nan, 2, 3],
+            "y": [10, 11, np.nan, 13],
+        })
+        fit = Mock(wraps=np.polyfit)
+        monkeypatch.setattr(np, "polyfit", fit)
+
+        PolyFit(order=1)._fit_predict(data)
+
+        assert_array_equal(fit.call_args.args[0], [0, 3])
+        assert_array_equal(fit.call_args.args[1], [10, 13])
 
     def test_polyfit_003_sufficient_complete_pairs_fit_without_missing_exception(self):
         """GUID: POLYFIT-003."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, 1, np.nan, 2],
+            "y": [1, 3, 99, 5],
+        })
 
-    def test_polyfit_007_null_coordinates_are_not_imputed_for_fitting(self):
-        """GUID: POLYFIT-007."""
-        assert True
+        result = PolyFit(order=1, gridsize=5)._fit_predict(data)
 
-    def test_polyfit_007_incomplete_observations_are_not_fitted_or_interpolated(self):
+        assert_array_equal(result["x"], np.linspace(0, 2, 5))
+        assert_array_almost_equal(result["y"], [1, 2, 3, 4, 5])
+
+    def test_polyfit_007_null_coordinates_are_not_imputed_for_fitting(
+        self, monkeypatch
+    ):
         """GUID: POLYFIT-007."""
-        assert True
+        data = pd.DataFrame({
+            "x": [0, None, 2, 3],
+            "y": [0, 100, np.nan, 9],
+        })
+        fit = Mock(wraps=np.polyfit)
+        monkeypatch.setattr(np, "polyfit", fit)
+
+        PolyFit(order=1)._fit_predict(data)
+
+        assert_array_equal(fit.call_args.args[0], [0, 3])
+        assert_array_equal(fit.call_args.args[1], [0, 9])
+
+    def test_polyfit_007_incomplete_observations_are_not_fitted_or_interpolated(
+        self, monkeypatch
+    ):
+        """GUID: POLYFIT-007."""
+        data = pd.DataFrame({
+            "x": [-100, 0, 2, 100],
+            "y": [np.nan, 1, 5, None],
+        })
+        fit = Mock(wraps=np.polyfit)
+        monkeypatch.setattr(np, "polyfit", fit)
+
+        result = PolyFit(order=1, gridsize=3)._fit_predict(data)
+
+        assert_array_equal(fit.call_args.args[0], [0, 2])
+        assert_array_equal(fit.call_args.args[1], [1, 5])
+        assert_array_equal(result["x"], [0, 1, 2])
