@@ -16,6 +16,9 @@ class PolyFit(Stat):
     # It may or may not change substantially in form or dissappear as we think
     # through the organization of the stats subpackage.
 
+    # Configuration contract (POLYFIT-006): These fields own the requested fit
+    # order and prediction-grid cardinality. The single-group boundary consumes
+    # them directly; pair filtering must not derive or replace either value.
     order: int = 2
     gridsize: int = 100
 
@@ -33,6 +36,11 @@ class PolyFit(Stat):
         # it into the separate numeric inputs consumed by numpy. The sufficiency
         # check, fit, and prediction-grid construction depend on that projection,
         # while grouping and missing-value policy remain outside numpy's boundary.
+        # Architecture seam (POLYFIT-006, POLYFIT-008): This method owns the
+        # retained-coordinate domain and the x/y prediction-frame contract for a
+        # single group. It consumes order and gridsize from PolyFit unchanged and
+        # is the only boundary that adapts retained pairs to numpy fitting and grid
+        # operations. Group keys and combined-output layout remain caller-owned.
         # POLYFIT-001, POLYFIT-002, POLYFIT-003, POLYFIT-007:
         # INPUT: fitting observations containing corresponding x and y coordinates.
         # DERIVE one completeness mask that is true only where both coordinates
@@ -95,6 +103,11 @@ class PolyFit(Stat):
         # of each partition. Dependency points from grouped orchestration to
         # _fit_predict, whose schema-compatible empty result lets aggregation
         # continue without a special failure channel or cross-group fallback.
+        # Integration seam (POLYFIT-008): Dependency flows from PolyFit into the
+        # existing GroupBy.apply contract. _fit_predict returns only the stable x/y
+        # prediction frame; GroupBy.apply owns restoring each originating key and
+        # reestablishing the combined column order. Do not move group identity into
+        # the numeric fitting boundary or introduce a second aggregation path here.
         # POLYFIT-004, POLYFIT-005 (grouped orchestration logic):
         # FOR EACH group selected by groupby, HAND OFF that group's rows alone to
         # the single-group fit procedure; preserve group boundaries at every call.
