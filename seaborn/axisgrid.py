@@ -1185,9 +1185,10 @@ class PairGrid(Grid):
     """
 
     # ARCHITECTURE [PAIR-MI-001, PAIR-MI-002, PAIR-MI-003, PAIR-MI-004,
-    # PAIR-MI-006]: PairGrid owns column-identifier identity from discovery through
-    # grid traversal. Figure-level pairplot delegates into this boundary; pandas
-    # remains responsible only for resolving a complete identifier to a Series.
+    # PAIR-MI-005, PAIR-MI-006]: PairGrid owns column-identifier identity from
+    # discovery through grid traversal. Figure-level pairplot delegates into this
+    # boundary; pandas remains responsible only for resolving a complete identifier
+    # to a Series.
     # Internal variable collections must therefore preserve tuple identifiers as
     # atomic values and must not write through to the caller-owned columns index.
 
@@ -1291,6 +1292,10 @@ class PairGrid(Grid):
         if np.isscalar(y_vars):
             y_vars = [y_vars]
 
+        # OWNERSHIP CONTRACT [PAIR-MI-005]: x_vars and y_vars are independent,
+        # ordered PairGrid-owned topology descriptors. Each entry is one complete
+        # DataFrame column identifier; its sequence position owns the corresponding
+        # grid column or row and crosses unchanged into the data-resolution seam.
         self.x_vars = x_vars = list(x_vars)
         self.y_vars = y_vars = list(y_vars)
         self.square_grid = self.x_vars == self.y_vars
@@ -2184,9 +2189,9 @@ def pairplot(
 
     # Set up the PairGrid
     grid_kws.setdefault("diag_sharey", diag_kind == "hist")
-    # INTEGRATION SEAM [PAIR-MI-001, PAIR-MI-004, PAIR-MI-006]: pairplot owns
-    # orchestration only. PairGrid owns variable identity, topology, and lookup;
-    # the original DataFrame crosses this seam unchanged.
+    # INTEGRATION SEAM [PAIR-MI-001, PAIR-MI-004, PAIR-MI-005, PAIR-MI-006]:
+    # pairplot owns orchestration only. PairGrid owns variable identity, topology,
+    # and lookup; the original DataFrame crosses this seam unchanged.
     grid = PairGrid(data, vars=vars, x_vars=x_vars, y_vars=y_vars, hue=hue,
                     hue_order=hue_order, palette=palette, corner=corner,
                     height=height, aspect=aspect, dropna=dropna, **grid_kws)
