@@ -113,10 +113,6 @@ class Grid(_BaseGrid):
             Returns self for easy chaining.
 
         """
-        # ARCHITECTURE — GUID: HUE-004, HUE-005
-        # ``label_order`` is the generic legend boundary: its producer owns
-        # selection and ordering, while this consumer only resolves matching
-        # handles (or neutral fallbacks) and preserves the supplied sequence.
         # Find the data for the legend
         if legend_data is None:
             legend_data = self._legend_data
@@ -1461,9 +1457,6 @@ class PairGrid(Grid):
             else:
                 hue = None
 
-            # HUE-001, HUE-002, HUE-003: Axes-level semantic mappers cannot
-            # represent observations outside of a partial hue order. Filter
-            # vector and hue together so that the remaining data stay aligned.
             if hue is not None:
                 hue_in_order = hue.isin(self._hue_order)
                 vector = vector[hue_in_order]
@@ -1569,8 +1562,6 @@ class PairGrid(Grid):
 
         data = self.data[axes_vars]
 
-        # HUE-001, HUE-002, HUE-003: Keep the axes variables and hue aligned
-        # while removing observations outside of a partial hue order.
         if self._hue_var is not None:
             data = data[data[self._hue_var].isin(self._hue_order)]
 
@@ -2159,10 +2150,6 @@ def pairplot(
 
     # Add a legend
     if hue is not None:
-        # ARCHITECTURE — GUID: HUE-004, HUE-005
-        # ``pairplot`` owns the partial-hue adapter between the caller contract
-        # and ``Grid.add_legend(label_order=...)``. PairGrid remains responsible
-        # for typed hue resolution and handle collection.
         if hue_order is None:
             grid.add_legend()
         else:
