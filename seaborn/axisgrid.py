@@ -1280,17 +1280,16 @@ class PairGrid(Grid):
         # to one Series, propagate the established pandas lookup/shape failure.
         # OUTPUT: ordered atomic x/y identifier sequences for grid construction.
         if vars is not None:
-            x_vars = list(vars)
-            y_vars = list(vars)
+            x_vars = self._normalize_vars(data, vars)
+            y_vars = list(x_vars)
         if x_vars is None:
             x_vars = numeric_cols
+        else:
+            x_vars = self._normalize_vars(data, x_vars)
         if y_vars is None:
             y_vars = numeric_cols
-
-        if np.isscalar(x_vars):
-            x_vars = [x_vars]
-        if np.isscalar(y_vars):
-            y_vars = [y_vars]
+        else:
+            y_vars = self._normalize_vars(data, y_vars)
 
         # OWNERSHIP CONTRACT [PAIR-MI-005]: x_vars and y_vars are independent,
         # ordered PairGrid-owned topology descriptors. Each entry is one complete
@@ -1746,6 +1745,20 @@ class PairGrid(Grid):
             if variable_type(data[col]) == "numeric":
                 numeric_cols.append(col)
         return numeric_cols
+
+    @staticmethod
+    def _normalize_vars(data, vars):
+        """Convert variable selections to a list of atomic column labels."""
+        if (
+            isinstance(data.columns, pd.MultiIndex)
+            and isinstance(vars, tuple)
+            and len(vars) == data.columns.nlevels
+            and vars in data.columns
+        ):
+            return [vars]
+        if np.isscalar(vars):
+            return [vars]
+        return list(vars)
 
 
 class JointGrid(_BaseGrid):

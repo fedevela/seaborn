@@ -1353,15 +1353,42 @@ class TestPairGrid:
 
     def test_pair_mi_005_vars_complete_tuples_select_square_grid_in_order(self):
         """PAIR-MI-005: Ordered tuple vars select the ordered square grid."""
-        assert True
+        df = self._multiindex_df()
+        vars = [("B", "2"), ("A", "1"), ("B", "1")]
+
+        g = ag.pairplot(df, vars=vars)
+
+        assert g.axes.shape == (3, 3)
+        assert g.x_vars == vars
+        assert g.y_vars == vars
+        assert g.square_grid
 
     def test_pair_mi_005_x_y_complete_tuples_select_grid_columns_rows_in_order(self):
         """PAIR-MI-005: Ordered tuple x/y vars select ordered columns/rows."""
-        assert True
+        df = self._multiindex_df()
+        x_vars = [("B", "1"), ("A", "2")]
+        y_vars = [("B", "2"), ("A", "1"), ("A", "2")]
+
+        g = ag.pairplot(df, x_vars=x_vars, y_vars=y_vars)
+
+        assert g.axes.shape == (3, 2)
+        assert g.x_vars == x_vars
+        assert g.y_vars == y_vars
+        assert not g.square_grid
 
     def test_pair_mi_005_shared_level_values_select_distinct_complete_tuples(self):
         """PAIR-MI-005: Complete tuples disambiguate shared level values."""
-        assert True
+        df = self._multiindex_df()
+        x_vars = [("A", "1"), ("B", "1")]
+        y_vars = [("A", "2"), ("B", "2")]
+
+        g = ag.pairplot(df, x_vars=x_vars, y_vars=y_vars)
+
+        for i, y_var in enumerate(y_vars):
+            for j, x_var in enumerate(x_vars):
+                x, y = g.axes[i, j].collections[0].get_offsets().T
+                assert_array_equal(x, df[x_var])
+                assert_array_equal(y, df[y_var])
 
     def test_pair_mi_006_pairplot_preserves_multiindex_columns_and_order(self):
         """PAIR-MI-006: Pairplot leaves source MultiIndex columns unchanged."""
