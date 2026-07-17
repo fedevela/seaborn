@@ -137,7 +137,24 @@ class TestBar:
         self,
     ):
 
-        assert True
+        x = ["a", "b", "c"]
+        y = [1, 2, 3]
+        categorical_bool = pd.Series([False, None, True], dtype="category")
+
+        bool_plot = Plot(x, y, color=categorical_bool).add(Bar()).plot()
+        categorical_plot = Plot(x, y, color=["false", None, "true"]).add(Bar()).plot()
+
+        bool_bars = bool_plot._figure.axes[0].patches
+        categorical_bars = categorical_plot._figure.axes[0].patches
+        bool_colors = to_rgba_array([bar.get_facecolor() for bar in bool_bars])
+        categorical_colors = to_rgba_array([
+            bar.get_facecolor() for bar in categorical_bars
+        ])
+
+        assert len(bool_bars) == len(categorical_bars) == 2
+        assert_array_equal(bool_colors, categorical_colors)
+        assert np.isfinite(bool_colors).all()
+        assert not np.array_equal(bool_colors[0], bool_colors[1])
 
     def test_zero_height_skipped(self):
 
