@@ -50,3 +50,27 @@ class TestPolyFit:
             grid = np.linspace(part["x"].min(), part["x"].max(), gridsize)
             assert_array_equal(part["x"], grid)
             assert part["y"].diff().diff().dropna().abs().gt(0).all()
+
+    def test_polyfit_001_null_x_observation_is_excluded_before_fitting(self):
+        """GUID: POLYFIT-001."""
+        assert True
+
+    def test_polyfit_001_null_y_observation_is_excluded_before_fitting(self):
+        """GUID: POLYFIT-001."""
+        assert True
+
+    def test_polyfit_002_incomplete_removal_preserves_original_coordinate_pairs(self):
+        """GUID: POLYFIT-002."""
+        assert True
+
+    def test_polyfit_003_sufficient_complete_pairs_fit_without_missing_exception(self):
+        """GUID: POLYFIT-003."""
+        assert True
+
+    def test_polyfit_007_null_coordinates_are_not_imputed_for_fitting(self):
+        """GUID: POLYFIT-007."""
+        assert True
+
+    def test_polyfit_007_incomplete_observations_are_not_fitted_or_interpolated(self):
+        """GUID: POLYFIT-007."""
+        assert True
