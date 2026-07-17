@@ -1456,6 +1456,20 @@ class PairGrid(Grid):
             else:
                 hue = None
 
+            # PSEUDOCODE — GUID: HUE-001, HUE-002, HUE-003 (diagonal)
+            # IF categorical string hue data is paired with an explicit partial
+            # hue order:
+            #     DERIVE an inclusion mask by testing each hue value for
+            #     membership in the ordered hue levels.
+            #     APPLY the same mask to the diagonal vector and hue vector so
+            #     their observation indices remain aligned.
+            #     FORWARD only included observations and the supplied order to
+            #     the diagonal plotting function.
+            #     PRESERVE every included observation and its hue association.
+            #     EXCLUDE every omitted-level observation before semantic hue
+            #     mapping can reach an unsupported missing-value/isnan path.
+            # CONTINUE through the existing missing-data and plotting flow.
+
             if self._dropna:
                 not_na = vector.notna()
                 if hue is not None:
@@ -1555,6 +1569,21 @@ class PairGrid(Grid):
             axes_vars.append(self._hue_var)
 
         data = self.data[axes_vars]
+
+        # PSEUDOCODE — GUID: HUE-001, HUE-002, HUE-003 (off-diagonal)
+        # IF categorical string hue data is paired with an explicit partial
+        # hue order:
+        #     DERIVE an inclusion mask by testing the selected data's hue values
+        #     for membership in the ordered hue levels.
+        #     FILTER the selected rows once, before splitting them into x, y,
+        #     and hue vectors, so all vectors retain identical observation
+        #     indices and included-level representation.
+        #     FORWARD only included observations and the supplied order to the
+        #     bivariate plotting function.
+        #     EXCLUDE every omitted-level observation before semantic hue
+        #     mapping can reach an unsupported missing-value/isnan path.
+        # CONTINUE through the existing missing-data and plotting flow.
+
         if self._dropna:
             data = data.dropna()
 
