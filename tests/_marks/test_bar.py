@@ -98,6 +98,64 @@ class TestBar:
             assert bar.get_edgecolor() == to_rgba(colors[i], 1)
         assert ax.patches[0].get_linewidth() < ax.patches[1].get_linewidth()
 
+    # BOOL-001, BOOL-010
+    def test_bool_001_bool_010_objects_plot_with_true_false_color_renders_without_subtraction(
+        self,
+    ):
+
+        # PSEUDOCODE VERIFICATION [BOOL-001, BOOL-010]
+        # ARRANGE an objects-interface bar plot with both boolean color levels.
+        # ACT by constructing and rendering the complete plot.
+        # ASSERT rendering returns a plot with valid colors for both observations.
+        # FAILURE PATH: fail on any scale-setup exception, including boolean subtraction.
+
+        p = Plot(["a", "b"], [1, 2], color=[True, False]).add(Bar()).plot()
+
+        colors = [bar.get_facecolor() for bar in p._figure.axes[0].patches]
+        assert len(colors) == 2
+        assert np.isfinite(colors).all()
+
+    # BOOL-004, BOOL-010
+    def test_bool_004_bool_010_reported_boolean_color_plot_renders_distinct_bars(self):
+
+        # PSEUDOCODE VERIFICATION [BOOL-004, BOOL-010]
+        # ARRANGE exactly Plot(["a", "b"], [1, 2], color=[True, False]).add(Bar()).
+        # ACT by rendering the expression and collecting its two bar artists.
+        # ASSERT both bars render and expose valid face colors.
+        # ASSERT their face colors differ; fail if True and False collapse to one color.
+        # FAILURE PATH: fail on any construction, scale-setup, or rendering exception.
+
+        p = Plot(["a", "b"], [1, 2], color=[True, False]).add(Bar()).plot()
+
+        colors = [bar.get_facecolor() for bar in p._figure.axes[0].patches]
+        assert len(colors) == 2
+        assert np.isfinite(colors).all()
+        assert not np.array_equal(colors[0], colors[1])
+
+    # BOOL-009
+    def test_bool_009_supported_missing_boolean_colors_keep_established_handling_when_rendered(
+        self,
+    ):
+
+        x = ["a", "b", "c"]
+        y = [1, 2, 3]
+        categorical_bool = pd.Series([False, None, True], dtype="category")
+
+        bool_plot = Plot(x, y, color=categorical_bool).add(Bar()).plot()
+        categorical_plot = Plot(x, y, color=["false", None, "true"]).add(Bar()).plot()
+
+        bool_bars = bool_plot._figure.axes[0].patches
+        categorical_bars = categorical_plot._figure.axes[0].patches
+        bool_colors = to_rgba_array([bar.get_facecolor() for bar in bool_bars])
+        categorical_colors = to_rgba_array([
+            bar.get_facecolor() for bar in categorical_bars
+        ])
+
+        assert len(bool_bars) == len(categorical_bars) == 2
+        assert_array_equal(bool_colors, categorical_colors)
+        assert np.isfinite(bool_colors).all()
+        assert not np.array_equal(bool_colors[0], bool_colors[1])
+
     def test_zero_height_skipped(self):
 
         p = Plot(["a", "b", "c"], [1, 0, 2]).add(Bar()).plot()

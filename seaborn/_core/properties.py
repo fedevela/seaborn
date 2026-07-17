@@ -541,6 +541,14 @@ class Color(Property):
     legend = True
     normed = True
 
+    def default_scale(self, data: Series) -> Scale:
+        """Initialize a nominal scale for categorical, including boolean, data."""
+
+        var_type = variable_type(data, boolean_type="categorical")
+        if var_type == "categorical":
+            return Nominal()
+        return super().default_scale(data)
+
     def standardize(self, val: ColorSpec) -> RGBTuple | RGBATuple:
         # Return color with alpha channel only if the input spec has it
         # This is so that RGBA colors can override the Alpha property
@@ -640,10 +648,11 @@ class Color(Property):
         colors = self._standardize_color_sequence(colors)
 
         def mapping(x):
-            ixs = np.asarray(x, np.intp)
+            x = np.asarray(x)
             use = np.isfinite(x)
-            out = np.full((len(ixs), colors.shape[1]), np.nan)
-            out[use] = np.take(colors, ixs[use], axis=0)
+            out = np.full((len(x), colors.shape[1]), np.nan)
+            ixs = x[use].astype(np.intp)
+            out[use] = np.take(colors, ixs, axis=0)
             return out
 
         return mapping

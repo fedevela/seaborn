@@ -347,6 +347,8 @@ class ContinuousBase(Scale):
             else:
                 vmin, vmax = new.norm
             vmin, vmax = axis.convert_units((vmin, vmax))
+            if np.issubdtype(np.asarray([vmin, vmax]).dtype, np.bool_):
+                vmin, vmax = float(vmin), float(vmax)
             a = forward(vmin)
             b = forward(vmax) - forward(vmin)
 

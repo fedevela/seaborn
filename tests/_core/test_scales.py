@@ -8,12 +8,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from pandas.testing import assert_series_equal
 
-from seaborn._core.scales import (
-    Nominal,
-    Continuous,
-    Temporal,
-    PseudoAxis,
-)
+from seaborn._core.data import PlotData
 from seaborn._core.properties import (
     IntervalProperty,
     ObjectProperty,
@@ -21,6 +16,12 @@ from seaborn._core.properties import (
     Alpha,
     Color,
     Fill,
+)
+from seaborn._core.scales import (
+    Nominal,
+    Continuous,
+    Temporal,
+    PseudoAxis,
 )
 from seaborn.palettes import color_palette
 from seaborn.external.version import Version
@@ -311,6 +312,205 @@ class TestContinuous:
 
         with pytest.raises(TypeError, match="`like` must be"):
             s.label(like=2)
+
+
+class TestContinuousColorPreservationContract:
+
+    # BOOL-007
+    def test_bool_007_non_boolean_continuous_color_normalization_stays_unchanged(self):
+
+        x = pd.Series([1., 3., 9.], name="color")
+        scale = Continuous(norm=(3, 7))._setup(x, Color())
+
+        normalize = scale._pipeline[2]
+        assert_array_equal(normalize(x), [-.5, 0, 1.5])
+
+    # BOOL-007
+    def test_bool_007_non_boolean_continuous_color_transform_remains_unchanged(self):
+
+        x = pd.Series([1., 10., 100.], name="color")
+        scale = Continuous(trans="log")._setup(x, Color())
+
+        transform = scale._pipeline[1]
+        assert_array_equal(transform(x), [0, 1, 2])
+
+    # BOOL-007
+    def test_bool_007_non_boolean_continuous_color_range_remains_unchanged(self):
+
+        x = pd.Series([0., 1., 2.], name="color")
+        colors = ("b", "g")
+        scale = Continuous(colors)._setup(x, Color())
+        expected = color_palette("blend:b,g", as_cmap=True)([0, .5, 1])[:, :3]
+
+        assert_array_equal(scale(x), expected)
+
+    # BOOL-007
+    def test_bool_007_non_boolean_continuous_resulting_colors_remain_unchanged(self):
+
+        x = pd.Series([1., 3., 9.], name="color")
+        prop = Color()
+        scale = prop.default_scale(x)
+        expected = color_palette("ch:", as_cmap=True)([0, .25, 1])[:, :3]
+
+        assert isinstance(scale, Continuous)
+        assert_array_equal(scale._setup(x, prop)(x), expected)
+
+
+class TestNominalColorPreservationContract:
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_levels_remain_distinct_after_boolean_support(
+        self,
+    ):
+
+        x = pd.Series(["a", "c", "b", "c"], name="color")
+        scale = Nominal()._setup(x, Color())
+
+        convert_units = scale._pipeline[0]
+        assert_array_equal(convert_units(x), [0, 1, 2, 1])
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_ordering_remains_unchanged_after_boolean_support(
+        self,
+    ):
+
+        order = ["b", "a", "d", "c"]
+        x = pd.Series(
+            ["a", "c", "b", "c"],
+            name="color",
+            dtype=pd.CategoricalDtype(order),
+        )
+        scale = Nominal()._setup(x, Color())
+
+        assert scale._legend[0] == order
+        assert_array_equal(scale._pipeline[0](x), [1, 3, 0, 3])
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_palette_behavior_remains_unchanged_after_boolean_support(
+        self,
+    ):
+
+        x = pd.Series(["a", "c", "b", "c"], name="color")
+        palettes = [
+            ("flare", color_palette("flare", 3)),
+            (["r", "g", "b"], color_palette(["r", "g", "b"])),
+            ({"a": "r", "c": "g", "b": "b"}, color_palette(["r", "g", "b"])),
+        ]
+
+        for palette, colors in palettes:
+            scale = Nominal(palette)._setup(x, Color())
+            assert_array_equal(scale(x), [colors[0], colors[1], colors[2], colors[1]])
+
+    # BOOL-008
+    def test_bool_008_non_boolean_categorical_resulting_colors_remain_unchanged_after_boolean_support(
+        self,
+    ):
+
+        x = pd.Series(["a", "c", "b", "c"], name="color")
+        prop = Color()
+        scale = prop.default_scale(x)
+        colors = color_palette(n_colors=3)
+
+        assert isinstance(scale, Nominal)
+        assert_array_equal(
+            scale._setup(x, prop)(x),
+            [colors[0], colors[1], colors[2], colors[1]],
+        )
+
+
+class TestBooleanColorContract:
+
+    # BOOL-009
+    def test_bool_009_unsupported_missing_boolean_forms_require_no_new_behavior(self):
+
+        nullable_bool = pd.Series([False, pd.NA, True], dtype="boolean")
+        data = PlotData(None, {"color": nullable_bool}).frame["color"]
+
+        with pytest.raises(TypeError, match="boolean value of NA is ambiguous"):
+            Color().default_scale(data)
+
+    # BOOL-005
+    def test_bool_005_python_numpy_pandas_bool_forms_map_equivalent_colors(self):
+
+        representations = [
+            [False, True, False, True],
+            np.array([False, True, False, True], dtype=np.bool_),
+            pd.Series([False, True, False, True], dtype="boolean"),
+        ]
+
+        mappings = []
+        for representation in representations:
+            data = PlotData(None, {"color": representation}).frame["color"]
+            prop = Color()
+            scale = prop.default_scale(data)._setup(data, prop)
+
+            assert isinstance(scale, Nominal)
+            mappings.append(scale(data))
+
+        for mapping in mappings[1:]:
+            assert_array_equal(mapping, mappings[0])
+
+    # BOOL-005
+    def test_bool_005_rejected_boolean_forms_stay_outside_color_mapping_support(self):
+
+        with pytest.raises(ValueError, match="all scalar values"):
+            PlotData(None, {"color": True})
+
+    # BOOL-002, BOOL-010
+    def test_bool_002_bool_010_default_mapping_keeps_true_false_colors_distinct(self):
+
+        # PSEUDOCODE VERIFICATION [BOOL-002, BOOL-010]
+        # ARRANGE a color property and observations containing False and True.
+        # ACT through default-scale selection, scale setup, and color mapping.
+        # ASSERT both mapped results are valid RGB(A) colors.
+        # ASSERT the False and True results are unequal; fail on color collapse.
+
+        x = pd.Series([False, True], name="color")
+        prop = Color()
+        scale = prop.default_scale(x)._setup(x, prop)
+
+        colors = scale(x)
+
+        assert np.isfinite(colors).all()
+        assert not np.array_equal(colors[0], colors[1])
+
+    # BOOL-003
+    def test_bool_003_scale_setup_establishes_domain_without_boolean_subtraction(self):
+
+        # PSEUDOCODE VERIFICATION [BOOL-003]
+        # ARRANGE boolean color observations and a subtraction tripwire.
+        # ACT through default color-scale selection and domain setup.
+        # ASSERT setup chooses the categorical-level path.
+        # FAILURE PATH: fail immediately if setup attempts boolean subtraction.
+
+        x = pd.Series([False, True], name="color")
+        prop = Color()
+
+        scale = prop.default_scale(x)
+        assert isinstance(scale, Nominal)
+
+        scale._setup(x, prop)
+
+    # BOOL-006
+    def test_bool_006_single_truth_value_maps_without_two_ended_continuous_range(self):
+
+        # PSEUDOCODE VERIFICATION [BOOL-006]
+        # FOR each singleton dataset containing only False or only True:
+        #   ACT through default color-scale selection, setup, and mapping.
+        #   ASSERT the sole observation receives one valid RGB(A) color.
+        #   ASSERT setup does not request or synthesize a continuous endpoint pair.
+        #   FAILURE PATH: fail on subtraction, an invalid color, or a missing mapping.
+
+        prop = Color()
+        for value in [False, True]:
+            x = pd.Series([value], name="color")
+
+            scale = prop.default_scale(x)
+            assert isinstance(scale, Nominal)
+
+            color = scale._setup(x, prop)(x)
+            assert color.shape[0] == 1
+            assert np.isfinite(color).all()
 
 
 class TestNominal:
