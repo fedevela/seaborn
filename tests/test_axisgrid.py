@@ -1366,6 +1366,15 @@ class TestPairGrid:
         assert omitted
         assert omitted.isdisjoint(labels)
 
+    # ARCHITECTURE — GUID: HUE-006, HUE-007
+    # These contracts belong to TestPairGrid because ``pairplot`` is the public
+    # integration boundary and the returned PairGrid owns every observation seam.
+    # Reuse ``df["a"]`` as the categorical-string source fixture; enter only
+    # through ``ag.pairplot``; inspect ``diag_axes`` / ``axes`` for filtering and
+    # drawing order, and ``_legend`` for the final label contract. HUE-006 owns
+    # the complete-order baseline loci; HUE-007 owns the partial-order filtering,
+    # drawing-sequence, and legend loci below. Tests must not depend on PairGrid's
+    # internal filtering helpers, preserving pairplot -> PairGrid dependency flow.
     def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_plotting(self):
         """GUID: HUE-006 — a complete hue_order preserves pairplot plotting."""
         # GIVEN categorical string hue data and an explicit order containing
