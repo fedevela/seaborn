@@ -1401,19 +1401,59 @@ class TestPairGrid:
 
     def test_pair_mi_007_default_single_level_selection_remains_functional(self):
         """PAIR-MI-007: Default selection retains eligible single-level variables."""
-        assert True
+        g = ag.pairplot(self.df)
+
+        expected = ["x", "y", "z"]
+        assert g.x_vars == expected
+        assert g.y_vars == expected
+        assert g.axes.shape == (3, 3)
+        assert g.square_grid
 
     def test_pair_mi_007_single_level_diagonal_and_offdiagonal_plots_are_constructed(self):
         """PAIR-MI-007: Default calls construct established diagonal and off-diagonal plots."""
-        assert True
+        g = ag.pairplot(self.df)
+
+        assert all(ax.patches for ax in g.diag_axes)
+        for i, y_var in enumerate(g.y_vars):
+            for j, x_var in enumerate(g.x_vars):
+                if i == j:
+                    continue
+                x, y = g.axes[i, j].collections[0].get_offsets().T
+                assert_array_equal(x, self.df[x_var])
+                assert_array_equal(y, self.df[y_var])
 
     def test_pair_mi_007_explicit_single_level_vars_preserve_grid_order(self):
         """PAIR-MI-007: Explicit vars retain their single-level grid order."""
-        assert True
+        vars = ["z", "x"]
+
+        g = ag.pairplot(self.df, vars=vars)
+
+        assert g.x_vars == vars
+        assert g.y_vars == vars
+        assert g.axes.shape == (2, 2)
+        assert g.square_grid
+        x, y = g.axes[0, 1].collections[0].get_offsets().T
+        assert_array_equal(x, self.df["x"])
+        assert_array_equal(y, self.df["z"])
 
     def test_pair_mi_007_explicit_single_level_x_y_vars_preserve_grid_arrangement(self):
         """PAIR-MI-007: Explicit x_vars and y_vars retain grid arrangement and order."""
-        assert True
+        x_vars = ["z", "x"]
+        y_vars = ["y", "z", "x"]
+
+        g = ag.pairplot(
+            self.df, x_vars=x_vars, y_vars=y_vars, diag_kind=None,
+        )
+
+        assert g.x_vars == x_vars
+        assert g.y_vars == y_vars
+        assert g.axes.shape == (3, 2)
+        assert not g.square_grid
+        for i, y_var in enumerate(y_vars):
+            for j, x_var in enumerate(x_vars):
+                x, y = g.axes[i, j].collections[0].get_offsets().T
+                assert_array_equal(x, self.df[x_var])
+                assert_array_equal(y, self.df[y_var])
 
     def test_pairplot(self):
 
