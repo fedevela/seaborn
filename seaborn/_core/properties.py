@@ -573,6 +573,25 @@ class Color(Property):
     #   FAILURE PATH: propagate existing invalid palette/scale errors; never recover
     #                 from them by routing boolean data through continuous subtraction.
 
+    # PSEUDOCODE CONTRACT [BOOL-005]
+    # Verification: test_bool_005_python_numpy_pandas_bool_forms_map_equivalent_colors
+    # Verification: test_bool_005_rejected_boolean_forms_stay_outside_color_mapping_support
+    # default_scale(data) -> nominal scale; _get_categorical_mapping(scale, data) -> map:
+    #   INPUT observations already accepted by the objects-interface data pipeline.
+    #   CLASSIFY accepted Python, NumPy, and pandas boolean forms through the existing
+    #   boolean-as-categorical rule; do not branch on their concrete scalar classes.
+    #   DERIVE nominal levels by truth-value equivalence and assign one level index to
+    #   False-equivalent observations and one level index to True-equivalent observations.
+    #   ALLOCATE exactly one palette color for each derived truth-value level.
+    #   FOR each accepted observation:
+    #       RESOLVE its truth-value-equivalent level index.
+    #       RETURN the color allocated to that index, independent of representation.
+    #   IF the existing data pipeline rejects a purported boolean representation:
+    #       DO NOT coerce it, add a new classification branch, or widen accepted input.
+    #       PRESERVE the pipeline's existing rejection or error result.
+    #   FAILURE PATH: propagate existing classification, level-resolution, palette, and
+    #                 mapping errors without representation-specific recovery.
+
     def default_scale(self, data: Series) -> Scale:
         """Initialize a nominal scale for categorical, including boolean, data."""
         var_type = variable_type(data, boolean_type="categorical")
