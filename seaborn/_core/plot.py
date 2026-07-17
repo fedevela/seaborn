@@ -1468,14 +1468,6 @@ class Plotter:
             keep_rows &= df[dim] == subplot[dim]
         return df[keep_rows]
 
-    # ARCHITECTURE CONTRACT [BOOL-009]
-    # Ownership: this existing split-generator seam remains the sole owner of the
-    # generic keep/drop policy for rows with missing scaled semantic values.
-    # Boundary: it consumes Color's established missing sentinel but must remain
-    # independent of boolean classification, palette levels, and representation.
-    # Dependency direction: scaled/mapped plot data -> generic row policy -> mark
-    # rendering; no dependency points back from Plotter into Color scale selection.
-    # Integration: TestBar owns end-to-end coverage of this supported rendering seam.
     def _setup_split_generator(
         self, grouping_vars: list[str], df: DataFrame, subplots: list[dict[str, Any]],
     ) -> Callable[[], Generator]:
@@ -1495,19 +1487,6 @@ class Plotter:
             for view in subplots:
 
                 axes_df = self._filter_subplot_data(df, view)
-
-                # PSEUDOCODE CONTRACT [BOOL-009]
-                # Verification: test_bool_009_supported_missing_boolean_colors_keep_established_handling_when_rendered
-                # INPUT scaled plot rows, including supported missing boolean colors
-                # represented by the same missing sentinel as other missing semantics.
-                # IF the mark requests preservation of missing rows:
-                #   APPLY the existing coordinate-nulling/masking path unchanged.
-                # ELSE:
-                #   DROP rows with missing scaled values before grouping and rendering.
-                # HAND OFF only the rows retained by that established policy; do not
-                # inspect boolean origin or create a boolean-specific rendering path.
-                # FAILURE PATH: preserve existing filtering/grouping failures without
-                # substituting a color or artist for the missing observation.
 
                 with pd.option_context("mode.use_inf_as_na", True):
                     if keep_na:

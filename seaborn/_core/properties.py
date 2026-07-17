@@ -541,95 +541,8 @@ class Color(Property):
     legend = True
     normed = True
 
-    # ARCHITECTURE CONTRACT [BOOL-009]
-    # Ownership: Color.default_scale owns supported boolean classification and
-    # Color._get_categorical_mapping owns conversion of nominal indices to colors,
-    # including retention of the existing missing-color sentinel.
-    # Boundary: accepted representations are fixed by the upstream semantic data
-    # pipeline; this property must neither widen that contract nor own render-time
-    # omission and masking of missing rows.
-    # Dependency direction: semantic data acceptance -> Color scale selection ->
-    # Nominal level/index setup -> Color mapping -> Plotter missing-row policy.
-    # Integration: TestBooleanColorContract covers the unsupported-input boundary;
-    # TestBar covers the supported nullable-color path through the rendering seam.
-
-    # ARCHITECTURE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006, BOOL-010]
-    # Ownership: Color.default_scale is the property-specific routing seam for boolean
-    # color data. It may depend on variable_type and the existing Nominal contract, but
-    # the shared Property.default_scale policy must remain unchanged for other semantics.
-    # Boundary: boolean observations leave this seam as a Nominal scale and therefore
-    # must not reach ContinuousBase._setup, whose normalization contract subtracts its
-    # domain endpoints. Nominal._setup retains ownership of level indexing, while
-    # Color._get_categorical_mapping retains ownership of palette allocation and RGBA
-    # conversion, including distinct two-level and valid singleton mappings.
-    # Integration: TestBooleanColorContract owns scale-routing/mapping regression
-    # coverage; TestBar owns the complete objects-interface rendering seam.
-
-    # ARCHITECTURE CONTRACT [BOOL-005]
-    # Ownership: Color.default_scale owns representation-agnostic classification;
-    # Nominal._setup owns truth-value level identity; Color._get_categorical_mapping
-    # owns palette allocation from those nominal indices.
-    # Boundary: this property receives only forms accepted by the objects data pipeline
-    # and must not coerce, recognize, or otherwise widen that upstream input contract.
-    # Dependency direction: accepted data -> variable_type -> Nominal._setup -> Color
-    # mapping. No scale or property dependency may point back into data acceptance.
-    # Integration: TestBooleanColorContract owns cross-representation equivalence and
-    # rejected-form boundary coverage at the objects-interface color seam.
-
-    # PSEUDOCODE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006]
-    # default_scale(data: Series) -> Scale:
-    #   INPUT: all observed values for the color semantic, excluding no values here
-    #          because the scale setup remains responsible for missing-data handling.
-    #   CLASSIFY data while treating boolean observations as categorical levels.
-    #   IF the classified data are boolean/categorical:
-    #       SELECT a nominal scale before any continuous-domain normalization runs.
-    #       DERIVE the ordered observed levels through the categorical scale pipeline.
-    #       ASSIGN one valid default-palette entry to each observed level.
-    #       IF both False and True are observed:
-    #           PRESERVE separate level indices so their mapped colors are distinct.
-    #       ELSE IF exactly one truth value is observed:
-    #           ASSIGN that level one valid color without constructing two endpoints.
-    #       HAND OFF indexed RGB(A) values to the mark renderer.
-    #       RETURN the configured nominal scale; do not evaluate boolean differences.
-    #   ELSE:
-    #       DELEGATE to the existing color-scale selection for the classified type.
-    #   FAILURE PATH: propagate existing invalid palette/scale errors; never recover
-    #                 from them by routing boolean data through continuous subtraction.
-
-    # PSEUDOCODE CONTRACT [BOOL-005]
-    # Verification: test_bool_005_python_numpy_pandas_bool_forms_map_equivalent_colors
-    # Verification: test_bool_005_rejected_boolean_forms_stay_outside_color_mapping_support
-    # default_scale(data) -> nominal scale; _get_categorical_mapping(scale, data) -> map:
-    #   INPUT observations already accepted by the objects-interface data pipeline.
-    #   CLASSIFY accepted Python, NumPy, and pandas boolean forms through the existing
-    #   boolean-as-categorical rule; do not branch on their concrete scalar classes.
-    #   DERIVE nominal levels by truth-value equivalence and assign one level index to
-    #   False-equivalent observations and one level index to True-equivalent observations.
-    #   ALLOCATE exactly one palette color for each derived truth-value level.
-    #   FOR each accepted observation:
-    #       RESOLVE its truth-value-equivalent level index.
-    #       RETURN the color allocated to that index, independent of representation.
-    #   IF the existing data pipeline rejects a purported boolean representation:
-    #       DO NOT coerce it, add a new classification branch, or widen accepted input.
-    #       PRESERVE the pipeline's existing rejection or error result.
-    #   FAILURE PATH: propagate existing classification, level-resolution, palette, and
-    #                 mapping errors without representation-specific recovery.
-
     def default_scale(self, data: Series) -> Scale:
         """Initialize a nominal scale for categorical, including boolean, data."""
-
-        # PSEUDOCODE CONTRACT [BOOL-009]
-        # Verification: test_bool_009_unsupported_missing_boolean_forms_require_no_new_behavior
-        # INPUT color observations already accepted by the semantic data pipeline.
-        # CLASSIFY them with the existing boolean-as-categorical rule, including only
-        # nullable boolean forms that this classification path already supports.
-        # IF the accepted observations classify as categorical boolean data:
-        #   SELECT the existing nominal scale and preserve its missing-value handling.
-        # ELSE:
-        #   DELEGATE to the established color-scale selection without coercing an
-        #   unsupported missing boolean form into the supported contract.
-        # FAILURE PATH: preserve the existing upstream rejection or downstream scale
-        # error; BOOL-009 introduces no new representation, recovery, or fallback.
 
         var_type = variable_type(data, boolean_type="categorical")
         if var_type == "categorical":
@@ -703,49 +616,6 @@ class Color(Property):
 
     def _get_categorical_mapping(self, scale, data):
         """Define mapping as lookup in list of discrete color values."""
-
-        # PSEUDOCODE CONTRACT [BOOL-009]
-        # Verification: test_bool_009_supported_missing_boolean_colors_keep_established_handling_when_rendered
-        # INPUT supported boolean color observations after nominal scale selection.
-        # DERIVE palette levels from non-missing truth values only; a missing value
-        # must not become a level or consume a palette entry.
-        # MAP each finite nominal index to its established truth-value color.
-        # FOR each missing nominal index, retain the existing all-missing color vector.
-        # HAND OFF mapped colors unchanged to the plot pipeline so its established
-        # missing-row policy, rather than a boolean-specific branch, controls rendering.
-        # OUTPUT the same rendered omission/masking behavior used before boolean color
-        # correction while preserving colors for all present observations.
-        # FAILURE PATH: propagate existing level, palette, and mapping failures; do not
-        # synthesize a color or add recovery specifically for a missing boolean value.
-
-        # ARCHITECTURE CONTRACT [BOOL-008]
-        # Ownership: Color._get_categorical_mapping remains the single owner of
-        # categorical palette selection, RGB(A) standardization, and index lookup.
-        # Boundary: this seam receives the level order and nominal indices owned by
-        # Nominal._setup; boolean routing belongs to Color.default_scale and must not
-        # alter the shared mapping contract for supported non-boolean categories.
-        # Dependency direction: Nominal._setup -> Color.get_mapping dispatch -> this
-        # categorical mapping. Palette allocation depends on established levels, while
-        # the nominal scale remains independent of color selection and representation.
-        # Integration: TestNominalColorPreservationContract owns regression coverage
-        # for palette behavior and resulting colors at this property seam.
-
-        # PSEUDOCODE CONTRACT [BOOL-008]
-        # Verification: test_bool_008_non_boolean_categorical_palette_behavior_remains_unchanged_after_boolean_support
-        # Verification: test_bool_008_non_boolean_categorical_resulting_colors_remain_unchanged_after_boolean_support
-        # INPUT the unchanged ordered non-boolean levels from the nominal scale.
-        # SELECT colors through the existing palette branch for scale.values:
-        #   IF mapping, validate every level and read colors in level order.
-        #   ELSE IF list, preserve existing length validation and list behavior.
-        #   ELSE IF tuple, blend the tuple into one color per level.
-        #   ELSE IF palette name, request one palette color per level.
-        #   ELSE IF unspecified, use the current cycle when it covers all levels;
-        #       otherwise use the existing categorical fallback palette.
-        # STANDARDIZE the selected sequence with the existing RGB(A) rules.
-        # FOR each finite nominal index, return the color at that same index.
-        # OUTPUT one unchanged resulting color per mapped non-boolean observation.
-        # FAILURE PATH: preserve existing missing-entry, invalid-length, invalid-palette,
-        # and unsupported-value errors; do not add boolean-specific recovery here.
 
         levels = categorical_order(data, scale.order)
         n = len(levels)
