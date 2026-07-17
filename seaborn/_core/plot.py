@@ -1468,6 +1468,14 @@ class Plotter:
             keep_rows &= df[dim] == subplot[dim]
         return df[keep_rows]
 
+    # ARCHITECTURE CONTRACT [BOOL-009]
+    # Ownership: this existing split-generator seam remains the sole owner of the
+    # generic keep/drop policy for rows with missing scaled semantic values.
+    # Boundary: it consumes Color's established missing sentinel but must remain
+    # independent of boolean classification, palette levels, and representation.
+    # Dependency direction: scaled/mapped plot data -> generic row policy -> mark
+    # rendering; no dependency points back from Plotter into Color scale selection.
+    # Integration: TestBar owns end-to-end coverage of this supported rendering seam.
     def _setup_split_generator(
         self, grouping_vars: list[str], df: DataFrame, subplots: list[dict[str, Any]],
     ) -> Callable[[], Generator]:

@@ -541,6 +541,18 @@ class Color(Property):
     legend = True
     normed = True
 
+    # ARCHITECTURE CONTRACT [BOOL-009]
+    # Ownership: Color.default_scale owns supported boolean classification and
+    # Color._get_categorical_mapping owns conversion of nominal indices to colors,
+    # including retention of the existing missing-color sentinel.
+    # Boundary: accepted representations are fixed by the upstream semantic data
+    # pipeline; this property must neither widen that contract nor own render-time
+    # omission and masking of missing rows.
+    # Dependency direction: semantic data acceptance -> Color scale selection ->
+    # Nominal level/index setup -> Color mapping -> Plotter missing-row policy.
+    # Integration: TestBooleanColorContract covers the unsupported-input boundary;
+    # TestBar covers the supported nullable-color path through the rendering seam.
+
     # ARCHITECTURE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006, BOOL-010]
     # Ownership: Color.default_scale is the property-specific routing seam for boolean
     # color data. It may depend on variable_type and the existing Nominal contract, but
