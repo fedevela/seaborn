@@ -103,10 +103,23 @@ class TestBar:
         self,
     ):
 
+        # PSEUDOCODE VERIFICATION [BOOL-001, BOOL-010]
+        # ARRANGE an objects-interface bar plot with both boolean color levels.
+        # ACT by constructing and rendering the complete plot.
+        # ASSERT rendering returns a plot with valid colors for both observations.
+        # FAILURE PATH: fail on any scale-setup exception, including boolean subtraction.
+
         assert True
 
     # BOOL-004, BOOL-010
     def test_bool_004_bool_010_reported_boolean_color_plot_renders_distinct_bars(self):
+
+        # PSEUDOCODE VERIFICATION [BOOL-004, BOOL-010]
+        # ARRANGE exactly Plot(["a", "b"], [1, 2], color=[True, False]).add(Bar()).
+        # ACT by rendering the expression and collecting its two bar artists.
+        # ASSERT both bars render and expose valid face colors.
+        # ASSERT their face colors differ; fail if True and False collapse to one color.
+        # FAILURE PATH: fail on any construction, scale-setup, or rendering exception.
 
         assert True
 

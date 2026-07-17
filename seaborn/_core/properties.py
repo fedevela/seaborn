@@ -541,6 +541,26 @@ class Color(Property):
     legend = True
     normed = True
 
+    # PSEUDOCODE CONTRACT [BOOL-001, BOOL-002, BOOL-003, BOOL-004, BOOL-006]
+    # default_scale(data: Series) -> Scale:
+    #   INPUT: all observed values for the color semantic, excluding no values here
+    #          because the scale setup remains responsible for missing-data handling.
+    #   CLASSIFY data while treating boolean observations as categorical levels.
+    #   IF the classified data are boolean/categorical:
+    #       SELECT a nominal scale before any continuous-domain normalization runs.
+    #       DERIVE the ordered observed levels through the categorical scale pipeline.
+    #       ASSIGN one valid default-palette entry to each observed level.
+    #       IF both False and True are observed:
+    #           PRESERVE separate level indices so their mapped colors are distinct.
+    #       ELSE IF exactly one truth value is observed:
+    #           ASSIGN that level one valid color without constructing two endpoints.
+    #       HAND OFF indexed RGB(A) values to the mark renderer.
+    #       RETURN the configured nominal scale; do not evaluate boolean differences.
+    #   ELSE:
+    #       DELEGATE to the existing color-scale selection for the classified type.
+    #   FAILURE PATH: propagate existing invalid palette/scale errors; never recover
+    #                 from them by routing boolean data through continuous subtraction.
+
     def standardize(self, val: ColorSpec) -> RGBTuple | RGBATuple:
         # Return color with alpha channel only if the input spec has it
         # This is so that RGBA colors can override the Alpha property
