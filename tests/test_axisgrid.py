@@ -1282,23 +1282,64 @@ class TestPairGrid:
 
     def test_HUE_001_partial_categorical_hue_order_creates_pairplot(self):
         """GUID: HUE-001 — partial string hue order completes without error."""
-        assert True
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=["a", "c"],
+        )
+
+        assert isinstance(g, ag.PairGrid)
 
     def test_HUE_002_partial_hue_order_omits_excluded_levels_on_diagonal(self):
         """GUID: HUE-002 — diagonal plots exclude observations not in order."""
-        assert True
+        order = ["a", "c"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+        expected_count = self.df["a"].isin(order).sum()
+
+        for ax in g.diag_axes:
+            count = sum(patch.get_height() for patch in ax.patches)
+            assert count == expected_count
 
     def test_HUE_002_partial_hue_order_omits_excluded_levels_off_diagonal(self):
         """GUID: HUE-002 — off-diagonal plots exclude observations not in order."""
-        assert True
+        order = ["a", "c"]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+        expected_count = self.df["a"].isin(order).sum()
+
+        for i, j in zip(*np.where(~np.eye(2, dtype=bool))):
+            offsets = g.axes[i, j].collections[0].get_offsets()
+            assert len(offsets) == expected_count
 
     def test_HUE_003_partial_hue_order_keeps_included_levels_on_diagonal(self):
         """GUID: HUE-003 — diagonal plots retain included observations."""
-        assert True
+        order = ["a", "c"]
+        included = self.df[self.df["a"].isin(order)]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        for ax in g.diag_axes:
+            count = sum(patch.get_height() for patch in ax.patches)
+            assert count == len(included)
 
     def test_HUE_003_partial_hue_order_keeps_included_levels_off_diagonal(self):
         """GUID: HUE-003 — off-diagonal plots retain included observations."""
-        assert True
+        order = ["a", "c"]
+        included = self.df[self.df["a"].isin(order)]
+        g = ag.pairplot(
+            self.df, vars=["x", "y"], hue="a", hue_order=order,
+            diag_kind="hist",
+        )
+
+        for i, j in zip(*np.where(~np.eye(2, dtype=bool))):
+            x, y = g.axes[i, j].collections[0].get_offsets().T
+            npt.assert_array_equal(x, included[["x", "y"][j]])
+            npt.assert_array_equal(y, included[["x", "y"][i]])
 
     def test_pairplot_reg(self):
 

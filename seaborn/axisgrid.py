@@ -1290,12 +1290,6 @@ class PairGrid(Grid):
 
         self._orig_palette = palette
 
-        # ARCHITECTURE — GUID: HUE-001, HUE-002, HUE-003
-        # PairGrid owns the ordered hue domain. Axes-level plotting functions
-        # consume that domain but must not be responsible for reconciling it
-        # with PairGrid's observations. Partial-order observation selection
-        # therefore belongs at PairGrid's diagonal and bivariate delegation
-        # seams, with `_hue_order` as their shared inclusion contract.
         self._hue_order = hue_order
         self.palette = self._get_palette(data, hue, hue_order, palette)
         self._legend_data = {}
@@ -1463,24 +1457,13 @@ class PairGrid(Grid):
             else:
                 hue = None
 
-            # INTEGRATION SEAM — GUID: HUE-001, HUE-002, HUE-003
-            # This is the diagonal ownership boundary: construct one aligned
-            # PairGrid-owned view of `vector` and `hue` here, before delegating
-            # semantic mapping to the axes-level plotting function below.
-
-            # PSEUDOCODE — GUID: HUE-001, HUE-002, HUE-003 (diagonal)
-            # IF categorical string hue data is paired with an explicit partial
-            # hue order:
-            #     DERIVE an inclusion mask by testing each hue value for
-            #     membership in the ordered hue levels.
-            #     APPLY the same mask to the diagonal vector and hue vector so
-            #     their observation indices remain aligned.
-            #     FORWARD only included observations and the supplied order to
-            #     the diagonal plotting function.
-            #     PRESERVE every included observation and its hue association.
-            #     EXCLUDE every omitted-level observation before semantic hue
-            #     mapping can reach an unsupported missing-value/isnan path.
-            # CONTINUE through the existing missing-data and plotting flow.
+            # HUE-001, HUE-002, HUE-003: Axes-level semantic mappers cannot
+            # represent observations outside of a partial hue order. Filter
+            # vector and hue together so that the remaining data stay aligned.
+            if hue is not None:
+                hue_in_order = hue.isin(self._hue_order)
+                vector = vector[hue_in_order]
+                hue = hue[hue_in_order]
 
             if self._dropna:
                 not_na = vector.notna()
@@ -1582,24 +1565,10 @@ class PairGrid(Grid):
 
         data = self.data[axes_vars]
 
-        # INTEGRATION SEAM — GUID: HUE-001, HUE-002, HUE-003
-        # This is the bivariate ownership boundary: construct one row-aligned
-        # PairGrid-owned view of `data` here, before splitting it into semantic
-        # vectors and delegating them to the axes-level plotting function.
-
-        # PSEUDOCODE — GUID: HUE-001, HUE-002, HUE-003 (off-diagonal)
-        # IF categorical string hue data is paired with an explicit partial
-        # hue order:
-        #     DERIVE an inclusion mask by testing the selected data's hue values
-        #     for membership in the ordered hue levels.
-        #     FILTER the selected rows once, before splitting them into x, y,
-        #     and hue vectors, so all vectors retain identical observation
-        #     indices and included-level representation.
-        #     FORWARD only included observations and the supplied order to the
-        #     bivariate plotting function.
-        #     EXCLUDE every omitted-level observation before semantic hue
-        #     mapping can reach an unsupported missing-value/isnan path.
-        # CONTINUE through the existing missing-data and plotting flow.
+        # HUE-001, HUE-002, HUE-003: Keep the axes variables and hue aligned
+        # while removing observations outside of a partial hue order.
+        if self._hue_var is not None:
+            data = data[data[self._hue_var].isin(self._hue_order)]
 
         if self._dropna:
             data = data.dropna()
