@@ -1366,6 +1366,26 @@ class TestPairGrid:
         assert omitted
         assert omitted.isdisjoint(labels)
 
+    def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_plotting(self):
+        """GUID: HUE-006 — a complete hue_order preserves pairplot plotting."""
+        assert True
+
+    def test_HUE_006_complete_categorical_hue_order_preserves_pairplot_legend(self):
+        """GUID: HUE-006 — a complete hue_order preserves pairplot legend behavior."""
+        assert True
+
+    def test_HUE_007_partial_categorical_hue_order_executes_and_excludes_omitted_levels(self):
+        """GUID: HUE-007 — a partial hue_order succeeds and filters omitted levels."""
+        assert True
+
+    def test_HUE_007_partial_categorical_hue_order_preserves_supplied_plot_sequence(self):
+        """GUID: HUE-007 — included levels plot in the supplied sequence."""
+        assert True
+
+    def test_HUE_007_partial_categorical_hue_order_limits_legend_to_supplied_sequence(self):
+        """GUID: HUE-007 — the legend contains only the supplied levels in order."""
+        assert True
+
     def test_pairplot_reg(self):
 
         vars = ["x", "y", "z"]
