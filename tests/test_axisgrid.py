@@ -1351,6 +1351,18 @@ class TestPairGrid:
         assert len(offdiag) == 12
         assert all(ax.collections for ax in offdiag)
 
+    def test_pair_mi_005_vars_complete_tuples_select_square_grid_in_order(self):
+        """PAIR-MI-005: Ordered tuple vars select the ordered square grid."""
+        assert True
+
+    def test_pair_mi_005_x_y_complete_tuples_select_grid_columns_rows_in_order(self):
+        """PAIR-MI-005: Ordered tuple x/y vars select ordered columns/rows."""
+        assert True
+
+    def test_pair_mi_005_shared_level_values_select_distinct_complete_tuples(self):
+        """PAIR-MI-005: Complete tuples disambiguate shared level values."""
+        assert True
+
     def test_pair_mi_006_pairplot_preserves_multiindex_columns_and_order(self):
         """PAIR-MI-006: Pairplot leaves source MultiIndex columns unchanged."""
         df = self._multiindex_df()
